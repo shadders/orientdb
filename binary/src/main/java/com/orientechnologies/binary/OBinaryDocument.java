@@ -11,6 +11,11 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class OBinaryDocument extends ODocument {
 
 	private ORecordHeader header;

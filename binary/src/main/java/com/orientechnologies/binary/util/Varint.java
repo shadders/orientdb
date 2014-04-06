@@ -41,6 +41,9 @@ import java.io.IOException;
  * </p>
  * 
  * Modified from original source at: http://svn.apache.org/repos/asf/mahout/trunk/core/src/main/java/org/apache/mahout/math/Varint.java
+ * 
+ * @author Steve Coughlan
+ * 
  */
 public final class Varint {
 

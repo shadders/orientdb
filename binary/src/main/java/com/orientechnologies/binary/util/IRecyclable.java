@@ -1,5 +1,10 @@
 package com.orientechnologies.binary.util;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public interface IRecyclable {
 
 	/**

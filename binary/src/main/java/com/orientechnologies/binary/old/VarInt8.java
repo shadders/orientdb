@@ -1,5 +1,10 @@
 package com.orientechnologies.binary.old;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class VarInt8 {
 
 	/**

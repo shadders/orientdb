@@ -9,6 +9,11 @@ import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class OBinaryProperty extends OPropertyImpl implements IBinaryHeaderEntry, IRecyclable, Cloneable {
 
 	// private String name;

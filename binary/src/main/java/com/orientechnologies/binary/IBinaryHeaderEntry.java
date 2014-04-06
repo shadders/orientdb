@@ -2,6 +2,11 @@ package com.orientechnologies.binary;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public interface IBinaryHeaderEntry {
 	
 	/**

@@ -3,6 +3,11 @@ package com.orientechnologies.binary.old;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class Strings {
 
 	private static HashMap<String, String> INTERNS = new HashMap();

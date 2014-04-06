@@ -1,12 +1,7 @@
 package com.orientechnologies.binary.runnabletest;
 
-import java.awt.font.OpenType;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,9 +9,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.binary.BinaryDocumentSerializer;
+import com.orientechnologies.binary.OBinaryClassSet;
 import com.orientechnologies.binary.OBinaryDocument;
 import com.orientechnologies.binary.OBinaryProperty;
-import com.orientechnologies.binary.OBinaryClassSet;
 import com.orientechnologies.binary.OClassVersion;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -25,6 +20,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class TestOdbBinMain {
 
 	public static void main(String[] args) throws Exception {

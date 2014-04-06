@@ -17,6 +17,11 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class BinaryDocumentSerializer implements ORecordSerializer {
 
 	public static final String NAME = "Binary Document Serializer";

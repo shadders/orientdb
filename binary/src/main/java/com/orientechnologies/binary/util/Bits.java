@@ -4,6 +4,7 @@ import java.util.List;
 
 /**
  * Set of utility methods for setting, clearing, toggling and reading bits.
+ * 
  * @author Steve Coughlan
  *
  */

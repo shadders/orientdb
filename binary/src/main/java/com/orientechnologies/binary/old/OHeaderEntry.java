@@ -4,6 +4,11 @@ import com.orientechnologies.binary.IBinaryHeaderEntry;
 import com.orientechnologies.binary.util.IRecyclable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
+/**
+ * 
+ * @author Steve Coughlan
+ *
+ */
 public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
 	
 	private int nameId;

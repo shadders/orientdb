@@ -61,7 +61,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * 
  * Following the last entry and beginning at headerByte[headerLength]:
  * 
- * dataLength:uint32 - length of data, this may included reserved space.
+ * dataLength:uint32 - length of data, this may include reserved space.
  * 
  * 
  * @author Steve Coughlan
@@ -100,7 +100,7 @@ public class ORecordHeader implements IRecyclable {
 	private byte[] nullBits;
 
 	private int dataLength;
-	/*
+	/**
 	 * we can't write absolute data offsets (i.e. including header bytes) into
 	 * the header because we don't know the header length until it's fully
 	 * written. So offsets are stored as the offset from the beginning of the
@@ -110,6 +110,10 @@ public class ORecordHeader implements IRecyclable {
 	 */
 	private int dataOffset;
 
+	/**
+	 * Used to keep track of header entries that have been parsed already
+	 * to allow lazy parsing.
+	 */
 	private int parsedProperties = 0;
 	private int parsedOffset = 0;
 
