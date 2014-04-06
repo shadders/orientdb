@@ -15,9 +15,9 @@ import java.util.List;
 
 import com.orientechnologies.binary.BinaryDocumentSerializer;
 import com.orientechnologies.binary.OBinaryDocument;
-import com.orientechnologies.binary.OSchemaProperty;
-import com.orientechnologies.binary.OSchemaSet;
-import com.orientechnologies.binary.OSchemaVersion;
+import com.orientechnologies.binary.OBinaryProperty;
+import com.orientechnologies.binary.OBinaryClassSet;
+import com.orientechnologies.binary.OClassVersion;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,16 +40,16 @@ public class TestOdbBinMain {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dir.getAbsolutePath()).create();// .open("admin",
 																										// "admin");
 
-		List<OSchemaProperty> fields = new ArrayList();
-		fields.add(new OSchemaProperty());
+		List<OBinaryProperty> fields = new ArrayList();
+		fields.add(new OBinaryProperty());
 
-		OSchemaSet schemaSet = OSchemaSet.newSchemaSet("employee");
-		OSchemaVersion schema = schemaSet.currentSchema();
-		schema.addProperty(new OSchemaProperty(schema, "fullname", OType.STRING));
-		schema.addProperty(new OSchemaProperty(schema, "age", OType.INTEGER));
-		schema.addProperty(new OSchemaProperty(schema, "dateofbirth", OType.DATE));
-		schema.addProperty(new OSchemaProperty(schema, "nullString", OType.STRING));
-		schema.addProperty(new OSchemaProperty(schema, "nullFloat", OType.FLOAT));
+		OBinaryClassSet schemaSet = OBinaryClassSet.newSchemaSet("employee");
+		OClassVersion schema = schemaSet.currentSchema();
+		schema.addProperty(new OBinaryProperty(schema, "fullname", OType.STRING));
+		schema.addProperty(new OBinaryProperty(schema, "age", OType.INTEGER));
+		schema.addProperty(new OBinaryProperty(schema, "dateofbirth", OType.DATE));
+		schema.addProperty(new OBinaryProperty(schema, "nullString", OType.STRING));
+		schema.addProperty(new OBinaryProperty(schema, "nullFloat", OType.FLOAT));
 		schema.makeImmutable();
 
 		db.getMetadata().getSchema().createClass(schema.getName());
@@ -78,13 +78,25 @@ public class TestOdbBinMain {
 		saveBytes(bytes, new File(dir, "data/serialized.bin"));
 		OBinaryDocument newDoc = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument());
 		
+		System.out.println("new: " + prettyDoc(newDoc));	
+		
+		OBinaryDocument partDoc1 = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument(), 
+				new String[] {"fullname", "randomInt", "age"});
+		
+		System.out.println("part1: " + prettyDoc(partDoc1));	
+		
+		OBinaryDocument partDoc2 = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument(), 
+				new String[] {"dateofbirth", "randomString", "nullFloat", "nullString", });
+		
+		System.out.println("part2: " + prettyDoc(partDoc2));	
+		
+		
 		//db.save(doc, schema.getName());
 
-		System.out.println("new: " + prettyDoc(newDoc));	
 		
 		//doc = db.load(doc.getIdentity());
 		
-		System.out.println(doc);		
+		//System.out.println(doc);		
 		
 		db.close();
 

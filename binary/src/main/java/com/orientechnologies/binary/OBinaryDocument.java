@@ -38,7 +38,7 @@ public class OBinaryDocument extends ODocument {
 		super(iClassName);
 	}
 
-	public OBinaryDocument(OSchemaVersion iClass) {
+	public OBinaryDocument(OClassVersion iClass) {
 		super(iClass);
 	}
 

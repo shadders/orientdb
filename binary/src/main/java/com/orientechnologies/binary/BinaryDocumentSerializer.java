@@ -31,7 +31,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		ORecordHeader header = ObjectPool.newRecordHeader();
 		header.parseHead(bytes, null);
 		
-		OSchemaVersion clazz = header.getClazz();
+		OClassVersion clazz = header.getClazz();
 		OBinaryDocument doc = new OBinaryDocument(clazz);
 		PropertyIdProvider idProvider = PropertyIdProvider.getForClass(clazz.getName());		
 		
@@ -46,7 +46,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			
 			if (!entry.isSchemaless()) {
 				
-				OSchemaProperty property = clazz.getField(entry.getNameId());
+				OBinaryProperty property = clazz.getField(entry.getNameId());
 				//validate.  TODO add more fields to error messages
 				if (property.getType() != entry.getType())
 					throw new RuntimeException("BinaryDocument header type does not match schema type for "
@@ -76,12 +76,13 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		ORecordHeader header = ObjectPool.newRecordHeader();
 		header.parseHead(bytes, iFields);
 		
-		OBinaryDocument doc;
+		OClassVersion clazz = header.getClazz();
+		OBinaryDocument doc = new OBinaryDocument(clazz);
 		
-		if (iRecord instanceof OBinaryDocument)
-			doc = (OBinaryDocument) iRecord;
-		else
-			doc = new OBinaryDocument(header.getClazz());
+//		if (iRecord instanceof OBinaryDocument)
+//			doc = (OBinaryDocument) iRecord;
+//		else
+//			doc = new OBinaryDocument(header.getClazz());
 				
 		int index;
 		
@@ -91,7 +92,10 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 				
 				//TODO handle embedded field i.e. myEmbedded.field1
 				IBinaryHeaderEntry entry = header.fieldHeader(index);
-				doc.field(field, readField(bytes, header.getDataOffset(), entry), entry.getType());
+				Object value = null;
+				if (!header.isNull(index))
+					value = readField(bytes, header.getDataOffset(), entry);
+				doc.field(field, value, entry.getType());
 			}
 		}
 		
@@ -105,7 +109,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		OBinaryDocument doc = (OBinaryDocument) iSource;
 		
 		ORecordHeader header = doc.getHeader();
-		OSchemaVersion clazz = null;
+		OClassVersion clazz = null;
 		
 		if (header == null) {
 			//might be a new record
@@ -134,13 +138,13 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		ByteArrayOutputStream dout = new ByteArrayOutputStream(); //data
 		Set<String> unwrittenFields = new HashSet(Arrays.asList(doc.fieldNames()));
 		
-		OSchemaProperty property;
+		OBinaryProperty property;
 		
 		int offset = 0;
 		
 		if (clazz.getSchemaId() > 0) {
 			//write fixed length first
-			for (OSchemaProperty fixedProperty: clazz.getFixedLengthProperties()) {
+			for (OBinaryProperty fixedProperty: clazz.getFixedLengthProperties()) {
 				String fieldName = fixedProperty.getName();
 				Object value = doc.rawField(fieldName);
 				if (value != null)
@@ -160,9 +164,9 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			
 			
 			//write variable length fields second
-			//for (OSchemaProperty property: clazz.getVariableLengthProperties()) {
+			//for (OBinaryProperty property: clazz.getVariableLengthProperties()) {
 			for (int i = 0; i < clazz.variableLengthPropertyCount(); i++) {
-				property = (OSchemaProperty) header.fieldHeaderVariable(i);
+				property = (OBinaryProperty) header.fieldHeaderVariable(i);
 				String fieldName = property.getName();
 				Object value = doc.rawField(fieldName);
 				int dataLength = 0;
@@ -186,8 +190,8 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 //				type = OType.ANY;
 //			}
 			Object value = doc.rawField(field);
-			//property = new OSchemaProperty(clazz, field, type);
-			property = (OSchemaProperty) header.fieldHeaderSchemaless(i);
+			//property = new OBinaryProperty(clazz, field, type);
+			property = (OBinaryProperty) header.fieldHeaderSchemaless(i);
 			int dataLength = 0;
 			if (value != null)
 				dataLength = writeField(dout, property, value);

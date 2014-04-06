@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public class OSchemaProperty extends OPropertyImpl implements IBinaryHeaderEntry, IRecyclable, Cloneable {
+public class OBinaryProperty extends OPropertyImpl implements IBinaryHeaderEntry, IRecyclable, Cloneable {
 
 	// private String name;
 
@@ -28,7 +28,7 @@ public class OSchemaProperty extends OPropertyImpl implements IBinaryHeaderEntry
 
 	/**
 	 * offset and length of the data within the parent version of the
-	 * OSchemaVersion. This is only stored for fixed length fields.
+	 * OClassVersion. This is only stored for fixed length fields.
 	 */
 	private int inDataOffset;
 	private int dataLength;
@@ -36,35 +36,35 @@ public class OSchemaProperty extends OPropertyImpl implements IBinaryHeaderEntry
 	private boolean schemaless;
 	private boolean mutable = true;
 	
-	public OSchemaProperty() {
+	public OBinaryProperty() {
 		super(OSchemaIndex.SCHEMALESS);
 	}
 
-	public OSchemaProperty(OClassImpl iOwner, ODocument iDocument) {
+	public OBinaryProperty(OClassImpl iOwner, ODocument iDocument) {
 		super(iOwner, iDocument);
 		checkOwner(iOwner);
 	}
 
-	public OSchemaProperty(OClassImpl iOwner, String iName, OType iType) {
+	public OBinaryProperty(OClassImpl iOwner, String iName, OType iType) {
 		super(iOwner, iName, iType);
 		checkOwner(iOwner);
 	}
 
-	public OSchemaProperty(OClassImpl iOwner) {
+	public OBinaryProperty(OClassImpl iOwner) {
 		super(iOwner);
 		checkOwner(iOwner);
 	}
 	
 	private void checkOwner(OClassImpl iOwner) {
-		if (iOwner instanceof OSchemaVersion)
+		if (iOwner instanceof OClassVersion)
 			return;
-		throw new RuntimeException("owner class is not an instance of OSchemaVersion");
+		throw new RuntimeException("owner class is not an instance of OClassVersion");
 	}
 
 	/**
 	 * Only used to create IBinaryHeaderEntry.NO_ENTRY
 	 */
-	OSchemaProperty(boolean mutable, OClassImpl iOwner) {
+	OBinaryProperty(boolean mutable, OClassImpl iOwner) {
 		super(iOwner == null ? OSchemaIndex.SCHEMALESS : iOwner);
 	}
 
@@ -114,8 +114,8 @@ public class OSchemaProperty extends OPropertyImpl implements IBinaryHeaderEntry
 		return nameId;
 	}
 	
-	private OSchemaVersion getSchema() {
-		return (OSchemaVersion) getOwnerClass();
+	private OClassVersion getSchema() {
+		return (OClassVersion) getOwnerClass();
 	}
 
 	/**
@@ -228,10 +228,10 @@ public class OSchemaProperty extends OPropertyImpl implements IBinaryHeaderEntry
 			throw new RuntimeException("Attempt to modify immutable header entry");
 	}
 
-	public OSchemaProperty getMutableCopy() {
+	public OBinaryProperty getMutableCopy() {
 		try {
 			// TODO do this manually do we can use the object pool
-			OSchemaProperty clone = (OSchemaProperty) this.clone();
+			OBinaryProperty clone = (OBinaryProperty) this.clone();
 			clone.mutable = true;
 			return clone;
 		} catch (CloneNotSupportedException e) {
