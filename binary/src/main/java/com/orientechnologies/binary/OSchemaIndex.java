@@ -18,36 +18,36 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 public class OSchemaIndex {
 
 			
-	private static List<OSchemaSet> schemas = new ArrayList();
-	private static Map<CaselessString, OSchemaSet> schemaMap = new HashMap();
+	private static List<OBinaryClassSet> schemas = new ArrayList();
+	private static Map<CaselessString, OBinaryClassSet> schemaMap = new HashMap();
 	
-	public static final OSchemaSet SCHEMALESS_SET = OSchemaSet.newSchemaSet("");
-	public static final OSchemaVersion SCHEMALESS = SCHEMALESS_SET.currentSchema();
+	public static final OBinaryClassSet SCHEMALESS_SET = OBinaryClassSet.newSchemaSet("");
+	public static final OClassVersion SCHEMALESS = SCHEMALESS_SET.currentSchema();
 	
 	static {
 		SCHEMALESS.makeImmutable();
 	}
 	
-	public static OSchemaSet getSchemaSetForId(int classId) {
+	public static OBinaryClassSet getSchemaSetForId(int classId) {
 		return schemas.get(classId);
 	}
 	
-	public static OSchemaVersion getCurrentSchemaForId(int classId) {
-		OSchemaSet set = schemas.get(classId);
+	public static OClassVersion getCurrentSchemaForId(int classId) {
+		OBinaryClassSet set = schemas.get(classId);
 		return set == null ? null : set.currentSchema();
 	}
 	
-	public static OSchemaVersion getCurrentSchemaForName(String name) {
-		OSchemaSet set = schemaMap.get(new CaselessString(name));
+	public static OClassVersion getCurrentSchemaForName(String name) {
+		OBinaryClassSet set = schemaMap.get(new CaselessString(name));
 		return set == null ? null : set.currentSchema(); 
 	}
 	
-	public static OSchemaSet getSchemaSetForName(String name) {
+	public static OBinaryClassSet getSchemaSetForName(String name) {
 		return schemaMap.get(new CaselessString(name));
 	}
 	
-//	public static void addNewClass(OSchemaVersion clazz) {
-//		OSchemaSet set = new OSchemaSet(clazz.getName(), Collections.singletonList(clazz));
+//	public static void addNewClass(OClassVersion clazz) {
+//		OBinaryClassSet set = new OBinaryClassSet(clazz.getName(), Collections.singletonList(clazz));
 //		addClass(set);
 //	}
 	
@@ -55,7 +55,7 @@ public class OSchemaIndex {
 	 * Probably only used when deserializing schema from disk on db startup
 	 * @param clazz
 	 */
-	public static void addClass(OSchemaSet clazz) {
+	public static void addClass(OBinaryClassSet clazz) {
 		
 		if (schemaMap.containsKey(clazz.getClassName()))
 			throw new RuntimeException("Class cannot be to full schema set twice");

@@ -7,7 +7,7 @@ public interface IBinaryHeaderEntry {
 	/**
 	 * Indicates no entry was found as opposed to an entry with a null value.
 	 */
-	public static final IBinaryHeaderEntry NO_ENTRY = new OSchemaProperty(false, null);
+	public static final IBinaryHeaderEntry NO_ENTRY = new OBinaryProperty(false, null);
 	
 	/**
 	 * @return the nameId

@@ -6,43 +6,43 @@ import com.orientechnologies.binary.util.CaselessString;
 
 /**
  * A set of Schemas of different versions that belong to one class.   This class provides fast lookup
- * so that when a Record's first 'version' byte is read the correct OSchemaVersion can be obtained to read the
+ * so that when a Record's first 'version' byte is read the correct OClassVersion can be obtained to read the
  * rest of the record.
  * 
  * @author Steve Coughlan
  *
  */
-public class OSchemaSet {
+public class OBinaryClassSet {
 
 	final private PropertyIdProvider idProvider;
 	
 	final private CaselessString className;
-	private OSchemaVersion[] versions;
-	private OSchemaVersion current;
+	private OClassVersion[] versions;
+	private OClassVersion current;
 	private int schemaId;
 	
 	
 	/**
 	 * Schemas should be in order of version.  i.e. version 0 should be at index 0 of the list.
 	 * @param className
-	 * @param oSchemaVersions
+	 * @param oClassVersions
 	 */
-	public OSchemaSet(String className, List<OSchemaVersion> oSchemaVersions) {
+	public OBinaryClassSet(String className, List<OClassVersion> oClassVersions) {
 		this.className = new CaselessString(className);
 		this.idProvider = PropertyIdProvider.getForClass(className);
-		this.versions = oSchemaVersions.toArray(new OSchemaVersion[oSchemaVersions.size()]);
+		this.versions = oClassVersions.toArray(new OClassVersion[oClassVersions.size()]);
 		this.current = versions[versions.length - 1];
 	}
 	
-	private OSchemaSet(String className) {
+	private OBinaryClassSet(String className) {
 		this.className = new CaselessString(className);
 		idProvider = PropertyIdProvider.getForClass(this.className.getCaseless());
 	}
 	
-	public static OSchemaSet newSchemaSet(String className) {
-		OSchemaSet set = new OSchemaSet(className);
+	public static OBinaryClassSet newSchemaSet(String className) {
+		OBinaryClassSet set = new OBinaryClassSet(className);
 		OSchemaIndex.addClass(set);
-		OSchemaVersion version0 = new OSchemaVersion(set, 0);
+		OClassVersion version0 = new OClassVersion(set, 0);
 		set.updateSchema(version0);
 		return set;
 	}
@@ -54,20 +54,20 @@ public class OSchemaSet {
 		return className;
 	}
 
-	public OSchemaVersion getSchema(int version) {
+	public OClassVersion getSchema(int version) {
 		return versions[version];
 	}
 	
-	public OSchemaVersion currentSchema() {
+	public OClassVersion currentSchema() {
 		return current;
 	}
 	
-	public void updateSchema(OSchemaVersion newSchema) {
-		OSchemaVersion[] newVersions;
+	public void updateSchema(OClassVersion newSchema) {
+		OClassVersion[] newVersions;
 		if (versions == null) {
-			newVersions = new OSchemaVersion[1];
+			newVersions = new OClassVersion[1];
 		} else {
-			newVersions = new OSchemaVersion[versions.length + 1];
+			newVersions = new OClassVersion[versions.length + 1];
 			for (int i = 0; i < newVersions.length; i++) {
 				newVersions[i] = versions[i];
 			}

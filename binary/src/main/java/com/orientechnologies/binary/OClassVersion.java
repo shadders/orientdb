@@ -18,9 +18,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
  * @author Steve Coughlan
  * 
  */
-public class OSchemaVersion extends OClassImpl {
+public class OClassVersion extends OClassImpl {
 
-	final private OSchemaSet schemaSet;
+	final private OBinaryClassSet schemaSet;
 
 	private int schemaId;
 	final private int version;
@@ -29,15 +29,15 @@ public class OSchemaVersion extends OClassImpl {
 	/**
 	 * Indexed by user defined order
 	 */
-	private List<OSchemaProperty> properties = new ArrayList();
+	private List<OBinaryProperty> properties = new ArrayList();
 	
-	private List<OSchemaProperty> fixedLengthProperties;
-	private List<OSchemaProperty> variableLengthProperties;
+	private List<OBinaryProperty> fixedLengthProperties;
+	private List<OBinaryProperty> variableLengthProperties;
 
 	// replace this with trove IntObjectMap
-	// final private TIntObjectHashMap<OSchemaProperty> fieldIndex = new
+	// final private TIntObjectHashMap<OBinaryProperty> fieldIndex = new
 	// TIntObjectHashMap();
-	private Map<Integer, OSchemaProperty> fieldIndex = new HashMap();
+	private Map<Integer, OBinaryProperty> fieldIndex = new HashMap();
 
 	private boolean mutable = false;
 
@@ -48,8 +48,8 @@ public class OSchemaVersion extends OClassImpl {
 	// * @param className
 	// * @param properties
 	// */
-	// public OSchemaVersion(int version, String className,
-	// List<OSchemaProperty> fields) {
+	// public OClassVersion(int version, String className,
+	// List<OBinaryProperty> fields) {
 	// super();
 	// this.version = version;
 	// this.clazz = new CaselessString(className);;
@@ -58,7 +58,7 @@ public class OSchemaVersion extends OClassImpl {
 	// this.variableLengthProperties = collectVariableFields();
 	// }
 
-	OSchemaVersion(OSchemaSet schemaSet, int version) {
+	OClassVersion(OBinaryClassSet schemaSet, int version) {
 		super(new OSchemaShared(false));
 		this.schemaSet = schemaSet;
 		this.schemaId = schemaSet.getSchemaId();
@@ -71,7 +71,7 @@ public class OSchemaVersion extends OClassImpl {
 		setNameInternal(className.getCased());
 	}
 
-	public void addProperty(OSchemaProperty property) {
+	public void addProperty(OBinaryProperty property) {
 		property.setUserOrder(properties.size());
 		properties.add(property);
 	}
@@ -80,7 +80,7 @@ public class OSchemaVersion extends OClassImpl {
 		properties = Collections.unmodifiableList(properties);
 		calculateOffsets();
 		//final pass to make the properties immutable
-		for (OSchemaProperty property: properties)
+		for (OBinaryProperty property: properties)
 			property.setMutable(false);
 	}
 
@@ -90,9 +90,9 @@ public class OSchemaVersion extends OClassImpl {
 		variableLengthProperties = new ArrayList(properties.size());
 
 		// calculate fixed field offsets and save them in eachpropertyIndex
-		// OSchemaProperty
+		// OBinaryProperty
 		int offset = 0;
-		for (OSchemaProperty property : properties) {
+		for (OBinaryProperty property : properties) {
 			if (property.isSchemaless())
 				continue;
 			fieldIndex.put(property.getNameId(), property);
@@ -123,11 +123,11 @@ public class OSchemaVersion extends OClassImpl {
 		
 	}
 
-//	private List<OSchemaProperty> collectVariableFields() {
+//	private List<OBinaryProperty> collectVariableFields() {
 //
-//		ArrayList<OSchemaProperty> variableLengthProperties = new ArrayList(properties.size());
+//		ArrayList<OBinaryProperty> variableLengthProperties = new ArrayList(properties.size());
 //
-//		for (OSchemaProperty property : properties) {
+//		for (OBinaryProperty property : properties) {
 //			fieldIndex.put(property.getNameId(), property);
 //			if (!BinUtils.isFixedLength(property.getType())) {
 //				variableLengthProperties.add(property);
@@ -143,7 +143,7 @@ public class OSchemaVersion extends OClassImpl {
 	/**
 	 * @return the parent schema for this class containing all versions of the schema
 	 */
-	public OSchemaSet getSchemaSet() {
+	public OBinaryClassSet getSchemaSet() {
 		return schemaSet;
 	}
 	
@@ -179,7 +179,7 @@ public class OSchemaVersion extends OClassImpl {
 	}
 
 	
-	public OSchemaProperty getField(String fieldName) {
+	public OBinaryProperty getField(String fieldName) {
 		int nameId = schemaSet.getIdProvider().idFor(fieldName);
 		return getField(nameId);
 	}
@@ -189,7 +189,7 @@ public class OSchemaVersion extends OClassImpl {
 	 * @param nameId
 	 * @return
 	 */
-	public OSchemaProperty getField(int nameId) {
+	public OBinaryProperty getField(int nameId) {
 		return fieldIndex.get(nameId);
 	}
 
@@ -198,7 +198,7 @@ public class OSchemaVersion extends OClassImpl {
 	 * @param index
 	 * @return
 	 */
-	public OSchemaProperty getProperty(int index) {
+	public OBinaryProperty getProperty(int index) {
 		return properties.get(index);
 	}
 
@@ -219,14 +219,14 @@ public class OSchemaVersion extends OClassImpl {
 	/**
 	 * @return the fixedLengthProperties
 	 */
-	public List<OSchemaProperty> getFixedLengthProperties() {
+	public List<OBinaryProperty> getFixedLengthProperties() {
 		return fixedLengthProperties;
 	}
 
 	/**
 	 * @return the variableLengthProperties
 	 */
-	public List<OSchemaProperty> getVariableLengthProperties() {
+	public List<OBinaryProperty> getVariableLengthProperties() {
 		return variableLengthProperties;
 	}
 
@@ -240,9 +240,9 @@ public class OSchemaVersion extends OClassImpl {
 			throw new RuntimeException("Attempt to modify immutable header entry");
 	}
 
-	public OSchemaVersion getMutableCopy() {
+	public OClassVersion getMutableCopy() {
 		// TODO do this manually do we can use the object pool
-		OSchemaVersion clone = new OSchemaVersion(schemaSet, version);
+		OClassVersion clone = new OClassVersion(schemaSet, version);
 		//clone.schemaSet = schemaSet;
 		//clone.version = version;
 		clone.schemaId = schemaId;
@@ -255,8 +255,8 @@ public class OSchemaVersion extends OClassImpl {
 		
 		clone.variableLengthProperties = new ArrayList(variableLengthProperties.size());
 		
-		for (OSchemaProperty property: variableLengthProperties) {
-			OSchemaProperty mutable = property.getMutableCopy();
+		for (OBinaryProperty property: variableLengthProperties) {
+			OBinaryProperty mutable = property.getMutableCopy();
 			clone.variableLengthProperties.add(property.getMutableCopy());
 			clone.properties.add(mutable);
 		}
@@ -264,7 +264,7 @@ public class OSchemaVersion extends OClassImpl {
 		clone.fieldIndex = new HashMap();
 		
 		for (int i = 0; i < clone.properties.size(); i++) {
-			OSchemaProperty prop = clone.properties.get(i);
+			OBinaryProperty prop = clone.properties.get(i);
 			clone.fieldIndex.put(prop.getNameId(), clone.properties.get(i));
 		}
 		

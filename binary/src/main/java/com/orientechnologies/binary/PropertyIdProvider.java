@@ -47,7 +47,7 @@ public class PropertyIdProvider {
 	private final Map<CaselessString, Integer> ids = new HashMap<CaselessString, Integer>();
 
 	/**
-	 * To maintain index order any properties deleted from the OSchemaVersion are simply
+	 * To maintain index order any properties deleted from the OClassVersion are simply
 	 * marked as available space (a hole) and reused for new properties.
 	 */
 	//private TIntLinkedList holes = new TIntLinkedList();
