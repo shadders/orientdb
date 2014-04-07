@@ -14,7 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Steve Coughlan
  *
  */
-public class OBinaryProperty extends OPropertyImpl implements IBinaryHeaderEntry, IRecyclable, Cloneable {
+public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRecyclable, Cloneable {
 
 	// private String name;
 
@@ -41,21 +41,21 @@ public class OBinaryProperty extends OPropertyImpl implements IBinaryHeaderEntry
 	private boolean schemaless;
 	private boolean mutable = true;
 	
-	public OBinaryProperty() {
+	public OBinProperty() {
 		super(OSchemaIndex.SCHEMALESS);
 	}
 
-	public OBinaryProperty(OClassImpl iOwner, ODocument iDocument) {
+	public OBinProperty(OClassImpl iOwner, ODocument iDocument) {
 		super(iOwner, iDocument);
 		checkOwner(iOwner);
 	}
 
-	public OBinaryProperty(OClassImpl iOwner, String iName, OType iType) {
+	public OBinProperty(OClassImpl iOwner, String iName, OType iType) {
 		super(iOwner, iName, iType);
 		checkOwner(iOwner);
 	}
 
-	public OBinaryProperty(OClassImpl iOwner) {
+	public OBinProperty(OClassImpl iOwner) {
 		super(iOwner);
 		checkOwner(iOwner);
 	}
@@ -67,9 +67,9 @@ public class OBinaryProperty extends OPropertyImpl implements IBinaryHeaderEntry
 	}
 
 	/**
-	 * Only used to create IBinaryHeaderEntry.NO_ENTRY
+	 * Only used to create IBinHeaderEntry.NO_ENTRY
 	 */
-	OBinaryProperty(boolean mutable, OClassImpl iOwner) {
+	OBinProperty(boolean mutable, OClassImpl iOwner) {
 		super(iOwner == null ? OSchemaIndex.SCHEMALESS : iOwner);
 	}
 
@@ -233,10 +233,10 @@ public class OBinaryProperty extends OPropertyImpl implements IBinaryHeaderEntry
 			throw new RuntimeException("Attempt to modify immutable header entry");
 	}
 
-	public OBinaryProperty getMutableCopy() {
+	public OBinProperty getMutableCopy() {
 		try {
 			// TODO do this manually do we can use the object pool
-			OBinaryProperty clone = (OBinaryProperty) this.clone();
+			OBinProperty clone = (OBinProperty) this.clone();
 			clone.mutable = true;
 			return clone;
 		} catch (CloneNotSupportedException e) {

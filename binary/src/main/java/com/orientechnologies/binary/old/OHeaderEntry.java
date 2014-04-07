@@ -1,23 +1,25 @@
 package com.orientechnologies.binary.old;
 
-import com.orientechnologies.binary.IBinaryHeaderEntry;
+import com.orientechnologies.binary.IBinHeaderEntry;
+import com.orientechnologies.binary.util.BinUtils;
 import com.orientechnologies.binary.util.IRecyclable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
  * 
  * @author Steve Coughlan
- *
+ * 
  */
-public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
-	
+public class OHeaderEntry implements IRecyclable, IBinHeaderEntry {
+
 	private int nameId;
+	private String name;
 	private OType type;
 	private int dataOffset;
 	private int dataLength;
-	
+
 	private boolean schemaless;
-	
+
 	private boolean mutable = true;
 
 	@Override
@@ -25,23 +27,37 @@ public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
 		nameId = -1;
 		schemaless = true;
 		mutable = false;
-		//all other fields are overwritten.
+		// all other fields are overwritten.
 	}
 
-	/* (non-Javadoc)
-	 * @see com.orientechnologies.binary.IBinaryHeaderEntry#getNameId()
-	 */
 	@Override
 	public int getNameId() {
 		return nameId;
 	}
 
 	/**
-	 * @param nameId the nameId to set
+	 * @param nameId
+	 *            the nameId to set
 	 */
 	public void setNameId(int nameId) {
 		checkMutable();
 		this.nameId = nameId;
+	}
+
+	/**
+	 * @return the name
+	 */
+	public String getName() {
+		return name;
+	}
+
+	/**
+	 * @param name
+	 *            the name to set
+	 */
+	public void setName(String name) {
+		checkMutable();
+		this.name = name;
 	}
 
 	@Override
@@ -50,7 +66,8 @@ public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
 	}
 
 	/**
-	 * @param type the type to set
+	 * @param type
+	 *            the type to set
 	 */
 	public void setType(OType type) {
 		checkMutable();
@@ -63,7 +80,8 @@ public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
 	}
 
 	/**
-	 * @param dataOffset the dataOffset to set
+	 * @param dataOffset
+	 *            the dataOffset to set
 	 */
 	public void setDataOffset(int dataOffset) {
 		checkMutable();
@@ -76,7 +94,8 @@ public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
 	}
 
 	/**
-	 * @param dataLength the dataLength to set
+	 * @param dataLength
+	 *            the dataLength to set
 	 */
 	public void setDataLength(int dataLength) {
 		checkMutable();
@@ -92,40 +111,44 @@ public class OHeaderEntry implements IRecyclable, IBinaryHeaderEntry {
 	}
 
 	/**
-	 * @param schemaless the schemaless to set
+	 * @param schemaless
+	 *            the schemaless to set
 	 */
 	public void setSchemaless(boolean schemaless) {
 		checkMutable();
 		this.schemaless = schemaless;
 	}
-	
+
 	private void checkMutable() {
 		if (!mutable)
 			throw new RuntimeException("Attempt to modify immutable header entry");
 	}
-	
+
 	void setMutable(boolean mutable) {
 		checkMutable();
 		this.mutable = mutable;
 	}
 	
-	
-	public OHeaderEntry getMutableCopy() {
-		try {
-			//TODO do this manually do we can use the object pool
-			OHeaderEntry clone = (OHeaderEntry) this.clone();
-			clone.setMutable(true);
-			return clone;
-		} catch (CloneNotSupportedException e) {
-			//should never happen
-			throw new RuntimeException(e);
-		}
-	}
-
 	@Override
 	public boolean isFixedLength() {
-		// TODO Auto-generated method stub
-		return false;
+		return type == null ? false : BinUtils.isFixedLength(type);
+	}
+
+	public OHeaderEntry getMutableCopy() {
+		// TODO use the object pool
+		OHeaderEntry clone = new OHeaderEntry();
+		clone.nameId = nameId;
+		clone.name = name;
+		clone.type = type;
+		clone.dataOffset = dataOffset;
+		clone.schemaless = schemaless;
+		clone.mutable = true;
+		clone.setMutable(true);
+		return clone;
+	}
+
+	public String toString() {
+		return String.format("%s[%s]:%s %s", nameId, name, type, schemaless ? "schemaless" : "declared");
 	}
 	
 }

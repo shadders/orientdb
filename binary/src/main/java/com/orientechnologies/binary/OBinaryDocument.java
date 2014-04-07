@@ -18,7 +18,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  */
 public class OBinaryDocument extends ODocument {
 
-	private ORecordHeader header;
+	private OBinRecordHeader header;
 
 	public OBinaryDocument() {
 	}
@@ -66,7 +66,7 @@ public class OBinaryDocument extends ODocument {
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(BinaryDocumentSerializer.NAME);
 	}
 
-	ORecordHeader getHeader() {
+	OBinRecordHeader getHeader() {
 		return header;
 	}
 

@@ -9,9 +9,9 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.binary.BinaryDocumentSerializer;
-import com.orientechnologies.binary.OBinaryClassSet;
+import com.orientechnologies.binary.OClassSet;
 import com.orientechnologies.binary.OBinaryDocument;
-import com.orientechnologies.binary.OBinaryProperty;
+import com.orientechnologies.binary.OBinProperty;
 import com.orientechnologies.binary.OClassVersion;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -40,16 +40,16 @@ public class TestOdbBinMain {
 		ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dir.getAbsolutePath()).create();// .open("admin",
 																										// "admin");
 
-		List<OBinaryProperty> fields = new ArrayList();
-		fields.add(new OBinaryProperty());
+		List<OBinProperty> fields = new ArrayList();
+		fields.add(new OBinProperty());
 
-		OBinaryClassSet schemaSet = OBinaryClassSet.newSchemaSet("employee");
+		OClassSet schemaSet = OClassSet.newSchemaSet("employee");
 		OClassVersion schema = schemaSet.currentSchema();
-		schema.addProperty(new OBinaryProperty(schema, "fullname", OType.STRING));
-		schema.addProperty(new OBinaryProperty(schema, "age", OType.INTEGER));
-		schema.addProperty(new OBinaryProperty(schema, "dateofbirth", OType.DATE));
-		schema.addProperty(new OBinaryProperty(schema, "nullString", OType.STRING));
-		schema.addProperty(new OBinaryProperty(schema, "nullFloat", OType.FLOAT));
+		schema.addProperty(new OBinProperty(schema, "fullname", OType.STRING));
+		schema.addProperty(new OBinProperty(schema, "age", OType.INTEGER));
+		schema.addProperty(new OBinProperty(schema, "dateofbirth", OType.DATE));
+		schema.addProperty(new OBinProperty(schema, "nullString", OType.STRING));
+		schema.addProperty(new OBinProperty(schema, "nullFloat", OType.FLOAT));
 		schema.makeImmutable();
 
 		db.getMetadata().getSchema().createClass(schema.getName());

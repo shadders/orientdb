@@ -18,36 +18,36 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 public class OSchemaIndex {
 
 			
-	private static List<OBinaryClassSet> schemas = new ArrayList();
-	private static Map<CaselessString, OBinaryClassSet> schemaMap = new HashMap();
+	private static List<OClassSet> schemas = new ArrayList();
+	private static Map<CaselessString, OClassSet> schemaMap = new HashMap();
 	
-	public static final OBinaryClassSet SCHEMALESS_SET = OBinaryClassSet.newSchemaSet("");
+	public static final OClassSet SCHEMALESS_SET = OClassSet.newSchemaSet("");
 	public static final OClassVersion SCHEMALESS = SCHEMALESS_SET.currentSchema();
 	
 	static {
 		SCHEMALESS.makeImmutable();
 	}
 	
-	public static OBinaryClassSet getSchemaSetForId(int classId) {
+	public static OClassSet getSchemaSetForId(int classId) {
 		return schemas.get(classId);
 	}
 	
 	public static OClassVersion getCurrentSchemaForId(int classId) {
-		OBinaryClassSet set = schemas.get(classId);
+		OClassSet set = schemas.get(classId);
 		return set == null ? null : set.currentSchema();
 	}
 	
 	public static OClassVersion getCurrentSchemaForName(String name) {
-		OBinaryClassSet set = schemaMap.get(new CaselessString(name));
+		OClassSet set = schemaMap.get(new CaselessString(name));
 		return set == null ? null : set.currentSchema(); 
 	}
 	
-	public static OBinaryClassSet getSchemaSetForName(String name) {
+	public static OClassSet getSchemaSetForName(String name) {
 		return schemaMap.get(new CaselessString(name));
 	}
 	
 //	public static void addNewClass(OClassVersion clazz) {
-//		OBinaryClassSet set = new OBinaryClassSet(clazz.getName(), Collections.singletonList(clazz));
+//		OClassSet set = new OClassSet(clazz.getName(), Collections.singletonList(clazz));
 //		addClass(set);
 //	}
 	
@@ -55,7 +55,7 @@ public class OSchemaIndex {
 	 * Probably only used when deserializing schema from disk on db startup
 	 * @param clazz
 	 */
-	public static void addClass(OBinaryClassSet clazz) {
+	public static void addClass(OClassSet clazz) {
 		
 		if (schemaMap.containsKey(clazz.getClassName()))
 			throw new RuntimeException("Class cannot be to full schema set twice");

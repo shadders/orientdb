@@ -6,8 +6,8 @@
 //import java.util.Map;
 //
 //import com.orientechnologies.binary.OClassVersion;
-//import com.orientechnologies.binary.OBinaryClassSet;
-//import com.orientechnologies.binary.OBinaryProperty;
+//import com.orientechnologies.binary.OClassSet;
+//import com.orientechnologies.binary.OBinProperty;
 //import com.orientechnologies.binary.PropertyIdProvider;
 //import com.orientechnologies.binary.VarInt8;
 //import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -43,11 +43,11 @@
 //	int headerStart;
 //	int headerLength;
 //	
-//	private List<OBinaryProperty> schemaLessFields = new ArrayList();
+//	private List<OBinProperty> schemaLessFields = new ArrayList();
 //	//use a trove IntObjectMap here
-//	private Map<Integer, OBinaryProperty> schemaLessFieldMap = new HashMap();
+//	private Map<Integer, OBinProperty> schemaLessFieldMap = new HashMap();
 //	
-//	public Record(OBinaryClassSet schemas, byte[] bytes) {
+//	public Record(OClassSet schemas, byte[] bytes) {
 //		this.bytes = bytes;
 //		VarInt8 version = VarInt8.read(bytes, 0);
 //		oClassInstance = schemas.getSchema(version.getValue());
@@ -58,7 +58,7 @@
 //	}
 //	
 //	public Field read(int nameId) {
-//		OBinaryProperty field = oClassInstance.getField(nameId);
+//		OBinProperty field = oClassInstance.getField(nameId);
 //		if (field == null)
 //			return readSchemaLessField(nameId);
 //		if (field.getType().isFixedLength())
@@ -66,11 +66,11 @@
 //		return readVariableLength(field);
 //	}
 //	
-//	private Field readFixedLength(OBinaryProperty field) {
+//	private Field readFixedLength(OBinProperty field) {
 //		return new Field(field, copyRange(field.getDataOffset(), field.getDataLength()));
 //	}
 //
-//	private Field readVariableLength(OBinaryProperty field) {
+//	private Field readVariableLength(OBinProperty field) {
 //		int headerOffset = field.getHeaderOffset();
 //		VarInt8 offset = VarInt8.read(bytes, headerOffset);
 //		headerOffset += offset.getBytesLength();
@@ -81,7 +81,7 @@
 //
 //	private Field readSchemaLessField(int nameId) {
 //		scanSchemaLessFields();
-//		OBinaryProperty field = schemaLessFieldMap.get(nameId);
+//		OBinProperty field = schemaLessFieldMap.get(nameId);
 //		return new Field(field, copyRange(field.getDataOffset(), field.getDataLength()));
 //	}
 //	
@@ -92,7 +92,7 @@
 //		 */
 //		int hoffset = oClassInstance.schemaLessHeaderOffset() + headerStart;
 //		while (hoffset < headerLength) {
-//			OBinaryProperty field = new OBinaryProperty();
+//			OBinProperty field = new OBinProperty();
 //			// nameId:varint16|dataType?|offset:varint8|length:varint8
 //			VarInt8 nameId = VarInt8.read(bytes, hoffset);
 //			hoffset += nameId.getBytesLength();

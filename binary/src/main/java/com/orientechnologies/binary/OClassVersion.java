@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
  */
 public class OClassVersion extends OClassImpl {
 
-	final private OBinaryClassSet schemaSet;
+	final private OClassSet schemaSet;
 
 	private int schemaId;
 	final private int version;
@@ -29,15 +29,15 @@ public class OClassVersion extends OClassImpl {
 	/**
 	 * Indexed by user defined order
 	 */
-	private List<OBinaryProperty> properties = new ArrayList();
+	private List<OBinProperty> properties = new ArrayList();
 	
-	private List<OBinaryProperty> fixedLengthProperties;
-	private List<OBinaryProperty> variableLengthProperties;
+	private List<OBinProperty> fixedLengthProperties;
+	private List<OBinProperty> variableLengthProperties;
 
 	// replace this with trove IntObjectMap
-	// final private TIntObjectHashMap<OBinaryProperty> fieldIndex = new
+	// final private TIntObjectHashMap<OBinProperty> fieldIndex = new
 	// TIntObjectHashMap();
-	private Map<Integer, OBinaryProperty> fieldIndex = new HashMap();
+	private Map<Integer, OBinProperty> fieldIndex = new HashMap();
 
 	private boolean mutable = false;
 
@@ -49,7 +49,7 @@ public class OClassVersion extends OClassImpl {
 	// * @param properties
 	// */
 	// public OClassVersion(int version, String className,
-	// List<OBinaryProperty> fields) {
+	// List<OBinProperty> fields) {
 	// super();
 	// this.version = version;
 	// this.clazz = new CaselessString(className);;
@@ -58,7 +58,7 @@ public class OClassVersion extends OClassImpl {
 	// this.variableLengthProperties = collectVariableFields();
 	// }
 
-	OClassVersion(OBinaryClassSet schemaSet, int version) {
+	OClassVersion(OClassSet schemaSet, int version) {
 		super(new OSchemaShared(false));
 		this.schemaSet = schemaSet;
 		this.schemaId = schemaSet.getSchemaId();
@@ -71,7 +71,7 @@ public class OClassVersion extends OClassImpl {
 		setNameInternal(className.getCased());
 	}
 
-	public void addProperty(OBinaryProperty property) {
+	public void addProperty(OBinProperty property) {
 		property.setUserOrder(properties.size());
 		properties.add(property);
 	}
@@ -80,7 +80,7 @@ public class OClassVersion extends OClassImpl {
 		properties = Collections.unmodifiableList(properties);
 		calculateOffsets();
 		//final pass to make the properties immutable
-		for (OBinaryProperty property: properties)
+		for (OBinProperty property: properties)
 			property.setMutable(false);
 	}
 
@@ -90,9 +90,9 @@ public class OClassVersion extends OClassImpl {
 		variableLengthProperties = new ArrayList(properties.size());
 
 		// calculate fixed field offsets and save them in eachpropertyIndex
-		// OBinaryProperty
+		// OBinProperty
 		int offset = 0;
-		for (OBinaryProperty property : properties) {
+		for (OBinProperty property : properties) {
 			if (property.isSchemaless())
 				continue;
 			fieldIndex.put(property.getNameId(), property);
@@ -123,11 +123,11 @@ public class OClassVersion extends OClassImpl {
 		
 	}
 
-//	private List<OBinaryProperty> collectVariableFields() {
+//	private List<OBinProperty> collectVariableFields() {
 //
-//		ArrayList<OBinaryProperty> variableLengthProperties = new ArrayList(properties.size());
+//		ArrayList<OBinProperty> variableLengthProperties = new ArrayList(properties.size());
 //
-//		for (OBinaryProperty property : properties) {
+//		for (OBinProperty property : properties) {
 //			fieldIndex.put(property.getNameId(), property);
 //			if (!BinUtils.isFixedLength(property.getType())) {
 //				variableLengthProperties.add(property);
@@ -143,7 +143,7 @@ public class OClassVersion extends OClassImpl {
 	/**
 	 * @return the parent schema for this class containing all versions of the schema
 	 */
-	public OBinaryClassSet getSchemaSet() {
+	public OClassSet getSchemaSet() {
 		return schemaSet;
 	}
 	
@@ -179,7 +179,7 @@ public class OClassVersion extends OClassImpl {
 	}
 
 	
-	public OBinaryProperty getField(String fieldName) {
+	public OBinProperty getField(String fieldName) {
 		int nameId = schemaSet.getIdProvider().idFor(fieldName);
 		return getField(nameId);
 	}
@@ -189,7 +189,7 @@ public class OClassVersion extends OClassImpl {
 	 * @param nameId
 	 * @return
 	 */
-	public OBinaryProperty getField(int nameId) {
+	public OBinProperty getField(int nameId) {
 		return fieldIndex.get(nameId);
 	}
 
@@ -198,7 +198,7 @@ public class OClassVersion extends OClassImpl {
 	 * @param index
 	 * @return
 	 */
-	public OBinaryProperty getProperty(int index) {
+	public OBinProperty getProperty(int index) {
 		return properties.get(index);
 	}
 
@@ -219,14 +219,14 @@ public class OClassVersion extends OClassImpl {
 	/**
 	 * @return the fixedLengthProperties
 	 */
-	public List<OBinaryProperty> getFixedLengthProperties() {
+	public List<OBinProperty> getFixedLengthProperties() {
 		return fixedLengthProperties;
 	}
 
 	/**
 	 * @return the variableLengthProperties
 	 */
-	public List<OBinaryProperty> getVariableLengthProperties() {
+	public List<OBinProperty> getVariableLengthProperties() {
 		return variableLengthProperties;
 	}
 
@@ -255,8 +255,8 @@ public class OClassVersion extends OClassImpl {
 		
 		clone.variableLengthProperties = new ArrayList(variableLengthProperties.size());
 		
-		for (OBinaryProperty property: variableLengthProperties) {
-			OBinaryProperty mutable = property.getMutableCopy();
+		for (OBinProperty property: variableLengthProperties) {
+			OBinProperty mutable = property.getMutableCopy();
 			clone.variableLengthProperties.add(property.getMutableCopy());
 			clone.properties.add(mutable);
 		}
@@ -264,7 +264,7 @@ public class OClassVersion extends OClassImpl {
 		clone.fieldIndex = new HashMap();
 		
 		for (int i = 0; i < clone.properties.size(); i++) {
-			OBinaryProperty prop = clone.properties.get(i);
+			OBinProperty prop = clone.properties.get(i);
 			clone.fieldIndex.put(prop.getNameId(), clone.properties.get(i));
 		}
 		

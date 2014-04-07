@@ -12,7 +12,7 @@ import com.orientechnologies.binary.util.CaselessString;
  * @author Steve Coughlan
  *
  */
-public class OBinaryClassSet {
+public class OClassSet {
 
 	final private PropertyIdProvider idProvider;
 	
@@ -27,20 +27,20 @@ public class OBinaryClassSet {
 	 * @param className
 	 * @param oClassVersions
 	 */
-	public OBinaryClassSet(String className, List<OClassVersion> oClassVersions) {
+	public OClassSet(String className, List<OClassVersion> oClassVersions) {
 		this.className = new CaselessString(className);
 		this.idProvider = PropertyIdProvider.getForClass(className);
 		this.versions = oClassVersions.toArray(new OClassVersion[oClassVersions.size()]);
 		this.current = versions[versions.length - 1];
 	}
 	
-	private OBinaryClassSet(String className) {
+	private OClassSet(String className) {
 		this.className = new CaselessString(className);
 		idProvider = PropertyIdProvider.getForClass(this.className.getCaseless());
 	}
 	
-	public static OBinaryClassSet newSchemaSet(String className) {
-		OBinaryClassSet set = new OBinaryClassSet(className);
+	public static OClassSet newSchemaSet(String className) {
+		OClassSet set = new OClassSet(className);
 		OSchemaIndex.addClass(set);
 		OClassVersion version0 = new OClassVersion(set, 0);
 		set.updateSchema(version0);

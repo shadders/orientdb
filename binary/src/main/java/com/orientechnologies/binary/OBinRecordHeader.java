@@ -25,7 +25,10 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * <p>
  * The header is made of 3 portions
  * <p>
- * HEAD classId:varint - index of the Class which resolves to OBinaryClassSet
+ * HEAD 
+ * format:byte - serialization format version.  The 4 MSB indicate the header
+ * format and the 4 LSB indicate the binary serialization format.
+ * classId:varint - index of the Class which resolves to OClassSet
  * version:varint - version number of schema resolves to OClassVersion
  * headerLength:varint - length in bytes of the complete header. This excludes
  * dataOffset and dataLength but includes any padding that may be added to
@@ -34,8 +37,9 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * These first 3 fields are padded to HEADER_HEADER_PADDING bytes if shorter
  * <p>
  * fieldCount:varint - number of fields in header (this doesn't include fixed
- * length declared fields) nullbitsLength:varint - number of bytes for nullbits
- * nullbites:byte[] - bitset indicated nulled fields
+ * length declared fields) 
+ * nullbitsLength:varint - number of bytes for nullbits
+ * nullbits:byte[] - bitset indicated nulled fields
  * <p>
  * SCHEMA DECLARED FIXED LENGTH HEADER ENTRIES
  * <p>
@@ -55,9 +59,11 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * 
  * Entries not declared in schema at all require a nameId and dataType
  * 
- * nameId:varint - index of actual string name within the class dataType:byte -
- * equivalent to OType.id offset:varint - the offset within the data portion of
- * the record length:varint - length of serialized field
+ * nameId:varint - index of actual string name within the class 
+ * dataType:byte - equivalent to OType.id 
+ * offset:varint - the offset within the data portion of
+ * the record 
+ * length:varint - length of serialized field
  * 
  * Following the last entry and beginning at headerByte[headerLength]:
  * 
@@ -67,7 +73,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * @author Steve Coughlan
  * 
  */
-public class ORecordHeader implements IRecyclable {
+public class OBinRecordHeader implements IRecyclable {
 
 	/**
 	 * Estimate of space that needs to be reserved for the 1st 3 fields of the
@@ -83,18 +89,25 @@ public class ORecordHeader implements IRecyclable {
 	 * This could potentially be a configurable property. The most likely way
 	 * this limit would be exceeded is by classes in excess of of 16k. If the
 	 * user is aware of this and expects headers to exceed 127 bytes (likely)
-	 * they could set the padding to 6 or more bytes.
+	 * they could set the padding to 7 or more bytes.
 	 * 
 	 */
-	private static final int HEADER_HEADER_PADDING = 5;
+	private static final int HEADER_HEADER_PADDING = 6;
 
 	private byte[] bytes;
 	private int offset;
 
+	private static final int FORMAT_VERSION = 0;
+	
+	/**
+	 * Version of the binary serialization format.
+	 */
+	private int format = FORMAT_VERSION;
+	
 	private PropertyIdProvider idProvider;
 	private OClassVersion clazz;
-	private int classId;
 	private int version;
+	private int classId;
 	private int headerLength;
 	private int fieldCount;
 	private byte[] nullBits;
@@ -121,10 +134,9 @@ public class ORecordHeader implements IRecyclable {
 	 * Should match the ordering of the original schema class. This is important
 	 * to ensure nullBits are ordered the same as header entries.
 	 */
-	private List<OBinaryProperty> propertyEntries = new ArrayList();
+	private List<OBinProperty> propertyEntries = new ArrayList();
 
-	public ORecordHeader() {
-
+	public OBinRecordHeader() {
 	}
 
 	/**
@@ -133,7 +145,7 @@ public class ORecordHeader implements IRecyclable {
 	 * 
 	 * @param doc
 	 */
-	ORecordHeader(OBinaryDocument doc, OClassVersion clazz, boolean updateSchema) {
+	OBinRecordHeader(OBinaryDocument doc, OClassVersion clazz, boolean updateSchema) {
 		if (clazz == null)
 			clazz = OSchemaIndex.SCHEMALESS;
 		else if (updateSchema) {
@@ -151,13 +163,13 @@ public class ORecordHeader implements IRecyclable {
 		Set<String> schemalessFields = new HashSet(Arrays.asList(fields));
 		List<Boolean> nulls = new ArrayList(schemalessFields.size());
 		// add schema related properties to the header
-		for (OBinaryProperty fixed : clazz.getFixedLengthProperties()) {
+		for (OBinProperty fixed : clazz.getFixedLengthProperties()) {
 			// don't add fixed properties as they aren't part of the header
 			// only need to calculate nullBits.
 			nulls.add(doc.field(fixed.getName()) == null);
 			schemalessFields.remove(fixed.getName());
 		}
-		for (OBinaryProperty variable : clazz.getVariableLengthProperties()) {
+		for (OBinProperty variable : clazz.getVariableLengthProperties()) {
 			propertyEntries.add(variable);
 			nulls.add(doc.field(variable.getName()) == null);
 			schemalessFields.remove(variable.getName());
@@ -165,16 +177,16 @@ public class ORecordHeader implements IRecyclable {
 
 		// add any additional fields
 		for (String field : schemalessFields) {
-			OBinaryProperty property = clazz.getField(field);
+			OBinProperty property = clazz.getField(field);
 			if (property == null) {
 				// it's not declared to we need to add an entry
-				// property = new OBinaryProperty(true, null);
+				// property = new OBinProperty(true, null);
 
 				OType type = doc.fieldType(field);
 				if (type == null)
 					type = OType.ANY;
 				// TODO is there a way to determine type dynamically?
-				property = new OBinaryProperty(clazz, field, type);
+				property = new OBinProperty(clazz, field, type);
 
 				// setName seems to trigger an attempt to update schema in DB
 				property.setSchemaless(true);
@@ -202,6 +214,9 @@ public class ORecordHeader implements IRecyclable {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		int headerLengthoffset = 0;
 
+		Varint.writeUnsignedVarInt(format, out);
+		headerLengthoffset += Varint.bytesLength(format);
+		
 		Varint.writeUnsignedVarInt(classId, out);
 		headerLengthoffset += Varint.bytesLength(classId);
 
@@ -227,7 +242,7 @@ public class ORecordHeader implements IRecyclable {
 		// add entries for variable length fields and schemaless fields
 		boolean finishedSchemaDeclared = false;
 		for (int i = 0; i < propertyEntries.size(); i++) {
-			OBinaryProperty property = propertyEntries.get(i);
+			OBinProperty property = propertyEntries.get(i);
 			// sanity check
 			if (!property.isSchemaless()) {
 				if (finishedSchemaDeclared)
@@ -238,7 +253,7 @@ public class ORecordHeader implements IRecyclable {
 				// declared property
 				// snuck in.
 				if (property.isFixedLength())
-					throw new RuntimeException("ORecordHeader has an entry for a fixed length schema declared "
+					throw new RuntimeException("OBinRecordHeader has an entry for a fixed length schema declared "
 							+ "property.  This should never happen.");
 
 				// if this isn't true then we can't check nullBits correctly.
@@ -341,7 +356,10 @@ public class ORecordHeader implements IRecyclable {
 		this.bytes = bytes;
 		int offset = this.offset;
 
-		classId = Varint.readUnsignedVarInt(bytes, 0);
+		format = Varint.readUnsignedVarInt(bytes, 0);
+		offset += Varint.bytesLength(format);
+		
+		classId = Varint.readUnsignedVarInt(bytes, offset);
 		offset += Varint.bytesLength(classId);
 
 		version = Varint.readUnsignedVarInt(bytes, offset);
@@ -398,7 +416,7 @@ public class ORecordHeader implements IRecyclable {
 		int fixed = clazz.fixedLengthPropertyCount();
 		int limit = internalIndex == -1 ? fieldCount - fixed : internalIndex - fixed + 1;
 
-		OBinaryProperty entry;
+		OBinProperty entry;
 
 		for (int i = parsedProperties; i < limit; i++) {
 
@@ -416,7 +434,7 @@ public class ORecordHeader implements IRecyclable {
 				parsedOffset++;
 			} else {
 				// declared variable length field
-				OBinaryProperty property = clazz.getVariableLengthProperties().get(i);
+				OBinProperty property = clazz.getVariableLengthProperties().get(i);
 				name = property.getName();
 				type = property.getType();
 				nameId = property.getNameId();
@@ -446,15 +464,15 @@ public class ORecordHeader implements IRecyclable {
 	/**
 	 * Returns the binary header for the field. If the field has a null value
 	 * returns null. If the field doesn't exist returns
-	 * IBinaryHeaderEntry.NO_HEADER
+	 * IBinHeaderEntry.NO_HEADER
 	 * 
 	 * @param internalIndex
 	 *            the internal index
 	 */
-	public IBinaryHeaderEntry fieldHeader(int internalIndex) {
+	public IBinHeaderEntry fieldHeader(int internalIndex) {
 
 		if (internalIndex == -1)
-			return IBinaryHeaderEntry.NO_ENTRY;
+			return IBinHeaderEntry.NO_ENTRY;
 
 		if (internalIndex < clazz.fixedLengthPropertyCount())
 			return clazz.getFixedLengthProperties().get(internalIndex);
@@ -463,7 +481,7 @@ public class ORecordHeader implements IRecyclable {
 		scanHeader(internalIndex);
 
 		internalIndex -= clazz.fixedLengthPropertyCount();
-		return internalIndex < 0 ? IBinaryHeaderEntry.NO_ENTRY : propertyEntries.get(internalIndex);
+		return internalIndex < 0 ? IBinHeaderEntry.NO_ENTRY : propertyEntries.get(internalIndex);
 	}
 
 	/**
@@ -475,7 +493,7 @@ public class ORecordHeader implements IRecyclable {
 	 * @param index
 	 * @return
 	 */
-	public IBinaryHeaderEntry fieldHeaderVariable(int index) {
+	public IBinHeaderEntry fieldHeaderVariable(int index) {
 		return fieldHeader(index + clazz.fixedLengthPropertyCount());
 	}
 
@@ -488,7 +506,7 @@ public class ORecordHeader implements IRecyclable {
 	 * @param index
 	 * @return
 	 */
-	public IBinaryHeaderEntry fieldHeaderSchemaless(int index) {
+	public IBinHeaderEntry fieldHeaderSchemaless(int index) {
 		return fieldHeader(index + clazz.fixedLengthPropertyCount() + clazz.variableLengthPropertyCount());
 	}
 
@@ -506,13 +524,13 @@ public class ORecordHeader implements IRecyclable {
 	 * @return
 	 */
 	public int indexOf(int nameId) {
-		OBinaryProperty property = clazz.getField(nameId);
+		OBinProperty property = clazz.getField(nameId);
 		if (property != null)
 			return property.getInternalOrder();
 		// not a schema declared field
 		// scan all headers to find it in non-declared fields
 		scanHeader(-1);
-		OBinaryProperty entry;
+		OBinProperty entry;
 		for (int i = 0; i < fieldCount - clazz.fixedLengthPropertyCount(); i++) {
 			entry = propertyEntries.get(i);
 			if (entry.getNameId() == nameId)
@@ -547,7 +565,7 @@ public class ORecordHeader implements IRecyclable {
 		 * that is never used? Perhaps clear the list if below a certain size,
 		 * if larger then discard and make a new one.
 		 */
-		for (OBinaryProperty entry : propertyEntries)
+		for (OBinProperty entry : propertyEntries)
 			entry.reset();
 		propertyEntries.clear();
 
