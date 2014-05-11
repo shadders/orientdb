@@ -3,6 +3,9 @@ package com.orientechnologies.binary.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.binary.FieldSerializeStrategy;
+import com.orientechnologies.binary.IFieldSerializer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -65,7 +68,9 @@ public class BinUtils {
 	 *         variable length.
 	 */
 	public static int fieldLength(OType type) {
-		return FIELD_LENGTHS.get(type);
+		IFieldSerializer serializer = FieldSerializeStrategy.get().serializerFor(type);
+		return serializer.isFixedLength() ? serializer.getFixedLength() : -1;
+		//return FIELD_LENGTHS.get(type);
 	}
 
 	/**

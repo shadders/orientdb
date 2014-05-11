@@ -10,7 +10,10 @@ import com.orientechnologies.binary.util.BinUtils;
 import com.orientechnologies.binary.util.CaselessString;
 import com.orientechnologies.binary.util.ObjectPool;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * 
@@ -20,11 +23,12 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
  */
 public class OClassVersion extends OClassImpl {
 
-	final private OClassSet schemaSet;
+	protected OClassSet classSet;
+	final protected OSchemaShared iOwner;
 
-	private int schemaId;
-	final private int version;
-	private CaselessString className;
+	private int classId;
+	private int version;
+	protected CaselessString className;
 
 	/**
 	 * Indexed by user defined order
@@ -58,22 +62,61 @@ public class OClassVersion extends OClassImpl {
 	// this.variableLengthProperties = collectVariableFields();
 	// }
 
-	OClassVersion(OClassSet schemaSet, int version) {
-		super(new OSchemaShared(false));
-		this.schemaSet = schemaSet;
-		this.schemaId = schemaSet.getSchemaId();
+	
+	
+	OClassVersion(OClassSet classSet, int version, final OSchemaShared iOwner, String iName, final int[] iClusterIds) {
+		super(iOwner, iName, iClusterIds);
+		this.iOwner = iOwner;
 		this.version = version;
-		this.className = schemaSet.getClassName();
+		this.className = new CaselessString(iName);
 		setClassName();
+		if (classSet != null)
+			setClassSet(classSet);
 	}
+	
+	/**
+	 * for unmarshalling from stored schema
+	 * @param iOwner
+	 * @param document
+	 */
+	OClassVersion(final OSchemaShared iOwner, ODocument document) {
+		super(iOwner, document);
+		this.iOwner = iOwner;
+	}
+	
+	OClassVersion() {
+		super();
+		this.iOwner = null;
+		this.version = 0;
+		this.className = new CaselessString("");
+		this.name = className.getCased();
+		classSet = (OClassSet) this;
+		classId = 0;
+	}
+	
+	void setClassSet(OClassSet classSet) {
+		this.classSet = classSet;
+		this.classId = classSet.getClassId();
+	}
+	
 
 	private void setClassName() {
 		setNameInternal(className.getCased());
 	}
-
+	
 	public void addProperty(OBinProperty property) {
+		addProperty(property, true);
+	}
+	
+	private void addProperty(OBinProperty property, boolean addToSuper) {
+		property.setMutableInternal(true);
 		property.setUserOrder(properties.size());
+		int nameId = getClassSet().idFor(property.getName());
+		property.setNameId(nameId);
 		properties.add(property);
+		if (addToSuper)
+			super.addProperty(property.getName(), property.getType(), null, null);
+		
 	}
 
 	public void makeImmutable() {
@@ -143,13 +186,13 @@ public class OClassVersion extends OClassImpl {
 	/**
 	 * @return the parent schema for this class containing all versions of the schema
 	 */
-	public OClassSet getSchemaSet() {
-		return schemaSet;
+	public OClassSet getClassSet() {
+		return classSet;
 	}
 	
-	public PropertyIdProvider getIdProvider() {
-		return schemaSet.getIdProvider();
-	}
+//	public IPropertyIdProvider getIdProvider() {
+//		return classSet.getIdProvider();
+//	}
 	
 	/**
 	 * number of fixed length properties.
@@ -180,7 +223,7 @@ public class OClassVersion extends OClassImpl {
 
 	
 	public OBinProperty getField(String fieldName) {
-		int nameId = schemaSet.getIdProvider().idFor(fieldName);
+		int nameId = classSet.idFor(fieldName);
 		return getField(nameId);
 	}
 	
@@ -210,10 +253,10 @@ public class OClassVersion extends OClassImpl {
 	}
 
 	/**
-	 * @return the schemaId
+	 * @return the classId
 	 */
-	public int getSchemaId() {
-		return schemaId;
+	public int getClassId() {
+		return classId;
 	}
 
 	/**
@@ -242,10 +285,10 @@ public class OClassVersion extends OClassImpl {
 
 	public OClassVersion getMutableCopy() {
 		// TODO do this manually do we can use the object pool
-		OClassVersion clone = new OClassVersion(schemaSet, version);
-		//clone.schemaSet = schemaSet;
+		OClassVersion clone = new OClassVersion(classSet, version, iOwner, getName(), getClusterIds());
+		//clone.schemaSet = classSet;
 		//clone.version = version;
-		clone.schemaId = schemaId;
+		clone.classId = classId;
 		clone.className = className;
 		clone.properties = new ArrayList(properties.size());
 		
@@ -271,5 +314,33 @@ public class OClassVersion extends OClassImpl {
 		clone.mutable = true;
 		return clone;
 	}
+
+	@Override
+	public void fromStream() {
+		super.fromStream();
+		version = document.field("version", OType.INTEGER);
+		for (OProperty property: super.properties.values()) {
+			addProperty((OBinProperty) property, false);
+		}
+		className = new CaselessString(getName());
+		makeImmutable();
+	}
+
+	@Override
+	public ODocument toStream() {
+		
+		ODocument document = super.toStream();
+		document.field("version", version, OType.INTEGER);
+		return document;
+	}
+	
+	/**
+	 * Allows OClassSet to bypass marshalling that occurs specific to the version
+	 * @return
+	 */
+	ODocument superToStream() {
+		return super.toStream();
+	}
+	
 
 }

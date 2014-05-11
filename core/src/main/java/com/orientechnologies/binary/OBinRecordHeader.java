@@ -104,7 +104,7 @@ public class OBinRecordHeader implements IRecyclable {
 	 */
 	private int format = FORMAT_VERSION;
 	
-	private PropertyIdProvider idProvider;
+//	private IPropertyIdProvider idProvider;
 	private OClassVersion clazz;
 	private int version;
 	private int classId;
@@ -147,14 +147,14 @@ public class OBinRecordHeader implements IRecyclable {
 	 */
 	OBinRecordHeader(OBinaryDocument doc, OClassVersion clazz, boolean updateSchema) {
 		if (clazz == null)
-			clazz = OSchemaIndex.SCHEMALESS;
+			clazz = OClassIndex.SCHEMALESS;
 		else if (updateSchema) {
 			/*
 			 * If the record is being rewritten and the schema has changed since
 			 * it was last writter it will have an outdated schema so we can
 			 * take this opportunity to rewrite it with the latest schema.
 			 */
-			clazz = clazz.getSchemaSet().currentSchema();
+			clazz = clazz.getClassSet().currentSchema();
 		}
 		clazz = clazz.getMutableCopy();
 		this.clazz = clazz;
@@ -365,8 +365,8 @@ public class OBinRecordHeader implements IRecyclable {
 		version = Varint.readUnsignedVarInt(bytes, offset);
 		offset += Varint.bytesLength(version);
 
-		clazz = OSchemaIndex.getSchemaSetForId(classId).getSchema(version);
-		idProvider = OSchemaIndex.getSchemaSetForId(classId).getIdProvider();
+		clazz = OClassIndex.getSchemaSetForId(classId).getSchema(version);
+//		idProvider = OClassIndex.getSchemaSetForId(classId).getIdProvider();
 
 		headerLength = Varint.readUnsignedVarInt(bytes, offset);
 		offset += Varint.bytesLength(headerLength);
@@ -428,7 +428,7 @@ public class OBinRecordHeader implements IRecyclable {
 			if (i >= clazz.variableLengthPropertyCount()) {
 				// schemaless: extra meta data to read
 				nameId = Varint.readUnsignedVarInt(bytes, parsedOffset);
-				name = clazz.getIdProvider().nameFor(nameId);
+				name = clazz.getClassSet().nameFor(nameId);
 				parsedOffset += Varint.bytesLength(nameId);
 				type = OType.getById(bytes[parsedOffset]);
 				parsedOffset++;
@@ -540,7 +540,7 @@ public class OBinRecordHeader implements IRecyclable {
 	}
 
 	public int indexOf(String property) {
-		int nameId = idProvider.idFor(property);
+		int nameId = clazz.getClassSet().idFor(property);
 		return indexOf(nameId);
 	}
 
@@ -689,6 +689,34 @@ public class OBinRecordHeader implements IRecyclable {
 	 */
 	void setDataOffset(int dataOffset) {
 		this.dataOffset = dataOffset;
+	}
+	
+	/**
+	 * @return 0 - 15 value indicating the header format.
+	 */
+	public int getHeaderFormat() {
+		//4 most significant bits
+		return 0xf0 & format;
+	}
+	
+	public void setHeaderFormat(int headerFormat) {
+		if (format >= 16)
+			throw new IllegalArgumentException("Header format out of range.  Must be < 16.");
+		format = (format & 0x0f) | (format << 4);
+	}
+	
+	/**
+	 * @return 0 - 15 value indicating the data serialization format.
+	 */
+	public int getDataFormat() {
+		//4 least significant bits
+		return 0x0f & format;
+	}
+	
+	public void setDataFormat(int dataFormat) {
+		if (format >= 16)
+			throw new IllegalArgumentException("Data format out of range.  Must be < 16.");
+		format = (format & 0xf0) | dataFormat;
 	}
 
 }

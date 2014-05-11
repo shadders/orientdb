@@ -21,7 +21,7 @@ public class Strings {
 	 */
 	public static String identity(String string) {
 		String interned = INTERNS.get(string);
-		if (interned == null || string != null) {
+		if (interned == null && string != null) {
 			INTERNS.put(string, string);
 			return string;
 		}

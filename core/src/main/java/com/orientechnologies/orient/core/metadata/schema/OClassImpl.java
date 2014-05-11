@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.binary.OBinProperty;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -491,7 +492,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Collection<ODocument> storedProperties = document.field("properties");
     if (storedProperties != null)
       for (ODocument p : storedProperties) {
-        prop = new OPropertyImpl(this, p);
+        prop = new OBinProperty(this, p);
         prop.fromStream();
         properties.put(prop.getName().toLowerCase(), prop);
       }
@@ -1156,7 +1157,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (properties.containsKey(lowerName))
       throw new OSchemaException("Class " + name + " already has property '" + iName + "'");
 
-    final OPropertyImpl prop = new OPropertyImpl(this, iName, iType);
+    final OPropertyImpl prop = new OBinProperty(this, iName, iType);
 
     properties.put(lowerName, prop);
 

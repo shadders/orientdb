@@ -2,7 +2,10 @@ package com.orientechnologies.binary;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.binary.util.ObjectPool;
 import com.orientechnologies.orient.core.id.ORID;
@@ -14,9 +17,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 /**
  * 
  * @author Steve Coughlan
- *
+ * 
  */
 public class OBinaryDocument extends ODocument {
+
+	public static final byte RECORD_TYPE = 'c';
 
 	private OBinRecordHeader header;
 
@@ -61,13 +66,33 @@ public class OBinaryDocument extends ODocument {
 
 	protected void setup() {
 		super.setup();
-		//if (header == null)
-		//	header = ObjectPool.newRecordHeader();
+		// if (header == null)
+		// header = ObjectPool.newRecordHeader();
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(BinaryDocumentSerializer.NAME);
+	}
+
+	/**
+	 * Internal.
+	 */
+	public byte getRecordType() {
+		return RECORD_TYPE;
 	}
 
 	OBinRecordHeader getHeader() {
 		return header;
 	}
 
+	/**
+	 * @return an immutable set of field names
+	 */
+	public Set<String> fieldNameSet() {
+		return Collections.unmodifiableSet(_fieldValues.keySet());
+	}
+
+	/**
+	 * @return an immutable collection of field values
+	 */
+	public Collection fieldValueCollection() {
+		return Collections.unmodifiableCollection(_fieldValues.values());
+	}
 }

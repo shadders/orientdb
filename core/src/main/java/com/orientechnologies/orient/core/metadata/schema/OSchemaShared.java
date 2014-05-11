@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.binary.OClassSet;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -288,7 +289,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (classes.containsKey(key))
         throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
-      final OClassImpl cls = new OClassImpl(this, iClassName, clusterIds);
+      //final OClassImpl cls = new OClassImpl(this, iClassName, clusterIds);
+      final OClassImpl cls = new OClassSet(this, iClassName, clusterIds);
       classes.put(key, cls);
 
       if (cls.getShortName() != null)
@@ -569,7 +571,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       // READ CURRENT SCHEMA VERSION
       final Integer schemaVersion = (Integer) document.field("schemaVersion");
       if (schemaVersion == null) {
-        OLogManager
+    	  OLogManager
             .instance()
             .error(
                 this,
@@ -588,7 +590,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       OClassImpl cls;
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
-        cls = new OClassImpl(this, c);
+        //cls = new OClassImpl(this, c);
+    	cls = new OClassSet(this, c);
         cls.fromStream();
         classes.put(cls.getName().toLowerCase(), cls);
 

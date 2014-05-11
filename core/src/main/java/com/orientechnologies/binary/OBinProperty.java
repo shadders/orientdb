@@ -1,5 +1,6 @@
 package com.orientechnologies.binary;
 
+import com.orientechnologies.binary.old.Strings;
 import com.orientechnologies.binary.util.BinUtils;
 import com.orientechnologies.binary.util.IRecyclable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -42,7 +43,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	private boolean mutable = true;
 	
 	public OBinProperty() {
-		super(OSchemaIndex.SCHEMALESS);
+		super(OClassIndex.SCHEMALESS);
 	}
 
 	public OBinProperty(OClassImpl iOwner, ODocument iDocument) {
@@ -70,7 +71,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	 * Only used to create IBinHeaderEntry.NO_ENTRY
 	 */
 	OBinProperty(boolean mutable, OClassImpl iOwner) {
-		super(iOwner == null ? OSchemaIndex.SCHEMALESS : iOwner);
+		super(iOwner == null ? OClassIndex.SCHEMALESS : iOwner);
 	}
 
 	public void reset() {
@@ -83,7 +84,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	}
 
 	/**
-	 * This should be retrieved from PropertyIdProvider.nameFor(nameId) to
+	 * This should be retrieved from IPropertyIdProvider.nameFor(nameId) to
 	 * ensure the same instance of each String is always used (faster map
 	 * lookups)
 	 * 
@@ -100,12 +101,12 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	 */
 	public OProperty setName(String name) {
 		checkMutable();
-		return super.setName(PropertyIdProvider.identity(name));
+		return super.setName(Strings.identity(name));
 	}
 	
 	public void setNameInternal(String name) {
 		checkMutable();
-		super.setNameInternal(PropertyIdProvider.identity(name));
+		super.setNameInternal(Strings.identity(name));
 	}
 
 	/**
@@ -114,12 +115,12 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	public int getNameId() {
 		if (nameId == -1) {
 			String name = getName();
-			nameId = getSchema().getIdProvider().idFor(name);
+			nameId = getClassVersion().getClassSet().idFor(name);
 		}
 		return nameId;
 	}
 	
-	private OClassVersion getSchema() {
+	private OClassVersion getClassVersion() {
 		return (OClassVersion) getOwnerClass();
 	}
 
@@ -224,7 +225,13 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	}
 
 	void setMutable(boolean mutable) {
-		checkMutable();
+		//allow set immutable even if already immutable
+		if (mutable)
+			checkMutable();
+		this.mutable = mutable;
+	}
+	
+	void setMutableInternal(boolean mutable) {
 		this.mutable = mutable;
 	}
 
@@ -252,22 +259,25 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 		// marshall additional properties
 		nameId = document.field("nameId");
 		
+		//OType is handled by super
+		
 		//FIXME one of these is not needed, work out which
 		userOrder = document.field("userOrder");
 		internalOrder = document.field("internalOrder");
-		setMutable(false);
 		setSchemaless(false);
+		setMutable(false);
 	}
 
 	@Override
 	public ODocument toStream() {
 		/*
 		 * FIXME
-		 * WARNING calling super.toStream sets status to UNMARSHALLING then LOADED so
+		 * WARNING calling super.toStream sets status to UNMAsuperTRSHALLING then LOADED so
 		 * we are repeating that cycle which means document is temporarily set LOADED
 		 * even when not finished.
 		 */
 		document = super.toStream();
+		
 		document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
 		try {
@@ -277,6 +287,8 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 			//FIXME one of these is not needed, work out which
 			document.field("userOrder", userOrder);
 			document.field("internalOrder", internalOrder);
+			
+			//OType is handled by super
 			
 		} finally {
 			document.setInternalStatus(ORecordElement.STATUS.LOADED);

@@ -8,14 +8,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.binary.util.ObjectPool;
-import com.orientechnologies.binary.util.Varint;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordFactoryManager.ORecordFactory;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
  * 
@@ -38,7 +35,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		
 		OClassVersion clazz = header.getClazz();
 		OBinaryDocument doc = new OBinaryDocument(clazz);
-		PropertyIdProvider idProvider = PropertyIdProvider.getForClass(clazz.getName());		
+//		IPropertyIdProvider idProvider = IPropertyIdProvider.getForClass(clazz.getName());		
 		
 		int index;
 		
@@ -46,7 +43,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			
 			IBinHeaderEntry entry = header.fieldHeader(i);
 			
-			String field = idProvider.casedNameFor(entry.getNameId());
+			String field = clazz.getClassSet().nameFor(entry.getNameId());
 			Object value;
 			
 			if (!entry.isSchemaless()) {
@@ -64,7 +61,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			if (header.isNull(i))
 				value = null;
 			else
-				value = readField(bytes, header.getDataOffset(), entry);
+				value = readField(header, bytes, header.getDataOffset(), entry);
 			
 			
 			doc.field(field, value, entry.getType());
@@ -99,7 +96,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 				IBinHeaderEntry entry = header.fieldHeader(index);
 				Object value = null;
 				if (!header.isNull(index))
-					value = readField(bytes, header.getDataOffset(), entry);
+					value = readField(header, bytes, header.getDataOffset(), entry);
 				doc.field(field, value, entry.getType());
 			}
 		}
@@ -120,13 +117,13 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			//might be a new record
 			String className = doc.getClassName();
 			if (className != null) {
-				clazz = OSchemaIndex.getCurrentSchemaForName(className);
+				clazz = OClassIndex.getCurrentSchemaForName(className);
 			} else {
-				clazz = OSchemaIndex.SCHEMALESS;
+				clazz = OClassIndex.SCHEMALESS;
 			}
 			header = new OBinRecordHeader(doc, clazz, !iOnlyDelta);
 			header.setClazz(clazz);
-			header.setClassId(clazz.getSchemaId());
+			header.setClassId(clazz.getClassId());
 			header.setVersion(clazz.getVersion());
 		} else {
 			clazz = header.getClazz();
@@ -147,13 +144,13 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		
 		int offset = 0;
 		
-		if (clazz.getSchemaId() > 0) {
+		if (clazz.getClassId() > 0) {
 			//write fixed length first
 			for (OBinProperty fixedProperty: clazz.getFixedLengthProperties()) {
 				String fieldName = fixedProperty.getName();
 				Object value = doc.rawField(fieldName);
 				if (value != null)
-					offset += writeField(dout, fixedProperty, value);
+					offset += writeField(header, dout, fixedProperty, value);
 				else  {
 					offset += fixedProperty.getDataLength();
 					try {
@@ -176,7 +173,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 				Object value = doc.rawField(fieldName);
 				int dataLength = 0;
 				if (value != null)
-					dataLength = writeField(dout, property, value);
+					dataLength = writeField(header, dout, property, value);
 				property.setDataLength(dataLength);
 				property.setInDataOffset(offset);
 				offset += dataLength;
@@ -199,7 +196,7 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			property = (OBinProperty) header.fieldHeaderSchemaless(i);
 			int dataLength = 0;
 			if (value != null)
-				dataLength = writeField(dout, property, value);
+				dataLength = writeField(header, dout, property, value);
 			property.setInDataOffset(offset);
 			offset += dataLength;
 			property.setDataLength(dataLength);
@@ -224,15 +221,17 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		return bytes;
 	}
 	
-	private Object readField(byte[] bytes, int offset, IBinHeaderEntry entry) {
-		OBinarySerializer serializer = OBinarySerializerFactory.getInstance().getObjectSerializer(entry.getType());
+	private Object readField(OBinRecordHeader header, byte[] bytes, int offset, IBinHeaderEntry entry) {
+		//OBinarySerializer serializer = OBinarySerializerFactory.getInstance().getObjectSerializer(entry.getType());
+		IFieldSerializer serializer = FieldSerializeStrategy.get().serializerFor(entry.getType());
 		if (serializer != null)
 			/**
 			 * Note the current implementations embed length in data when necessary.  
 			 * We don't need this because it's stored in the header.  This allows us
 			 * to calculate data holes without having the scan the entire data area.
 			 */
-			return serializer.deserialize(bytes, offset + entry.getInDataOffset());
+			//return serializer.deserialize(bytes, offset + entry.getInDataOffset());
+			return serializer.deserialize(entry.getName(), bytes, offset + entry.getInDataOffset(), entry.getDataLength());
 		
 		throw new RuntimeException("No serializer registered for type: " + entry.getType());
 	}
@@ -243,24 +242,25 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 	 * @param value
 	 * @return number of bytes written
 	 */
-	private int writeField(OutputStream out, IBinHeaderEntry entry, Object value) {
-		OBinarySerializer serializer = OBinarySerializerFactory.getInstance().getObjectSerializer(entry.getType());
+	private int writeField(OBinRecordHeader header, OutputStream out, IBinHeaderEntry entry, Object value) {
+		//OBinarySerializer serializer = OBinarySerializerFactory.getInstance().getObjectSerializer(entry.getType());
+		IFieldSerializer serializer = FieldSerializeStrategy.get().serializerFor(entry.getType());
 		if (serializer != null) {
 			/**
-			 * Note the current implementations embed length in data when necessary.  
+			 * Note the current implementations embeds length in data when necessary.  
 			 * We don't need this because it's stored in the header.  This allows us
 			 * to calculate data holes without having the scan the entire data area.
 			 */
-			byte[] stream = new byte[serializer.getObjectSize(value)];
-			serializer.serialize(value, stream, 0);
+			//byte[] stream = new byte[serializer.getObjectSize(value)];
+			byte[] bytes = serializer.serialize(entry.getName(), value);
 			try {
-				out.write(stream);
+				out.write(bytes);
 			} catch (IOException e) {
 				//should never happen with a ByteArrayOutputStream
 				throw new RuntimeException(e);
 			}
 			//return lengh so header entry can be updated
-			return stream.length;
+			return bytes.length;
 		}
 		
 		throw new RuntimeException("No binary serializer registered for type: " + entry.getType());

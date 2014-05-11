@@ -8,7 +8,7 @@
 //import com.orientechnologies.binary.OClassVersion;
 //import com.orientechnologies.binary.OClassSet;
 //import com.orientechnologies.binary.OBinProperty;
-//import com.orientechnologies.binary.PropertyIdProvider;
+//import com.orientechnologies.binary.IPropertyIdProvider;
 //import com.orientechnologies.binary.VarInt8;
 //import com.orientechnologies.orient.core.metadata.schema.OType;
 //
@@ -36,7 +36,7 @@
 // */
 //public class Record {
 //
-//	private final PropertyIdProvider idProvider;
+//	private final IPropertyIdProvider idProvider;
 //	byte[] bytes = null;
 //	OClassVersion oClassInstance;
 //	

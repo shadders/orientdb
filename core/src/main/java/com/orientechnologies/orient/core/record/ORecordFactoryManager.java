@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import com.orientechnologies.binary.OBinaryDocument;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -46,11 +47,16 @@ public class ORecordFactoryManager {
   }
 
   public ORecordFactoryManager() {
-    declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, new ORecordFactory() {
-      public ORecord<?> newRecord() {
-        return new ODocument();
-      }
-    });
+	declareRecordType(ODocument.RECORD_TYPE, "document", ODocument.class, new ORecordFactory() {
+	  public ORecord<?> newRecord() {
+	    return new ODocument();
+	  }
+	});
+	declareRecordType(OBinaryDocument.RECORD_TYPE, "bin-document", OBinaryDocument.class, new ORecordFactory() {
+	  public ORecord<?> newRecord() {
+	    return new OBinaryDocument();
+	  }
+	});
     declareRecordType(ORecordFlat.RECORD_TYPE, "flat", ORecordFlat.class, new ORecordFactory() {
       public ORecord<?> newRecord() {
         return new ORecordFlat();

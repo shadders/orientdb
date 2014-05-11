@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.binary.util.CaselessString;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 
 /**
@@ -15,13 +16,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * @author Steve Coughlan
  *
  */
-public class OSchemaIndex {
+public class OClassIndex {
 
 			
 	private static List<OClassSet> schemas = new ArrayList();
 	private static Map<CaselessString, OClassSet> schemaMap = new HashMap();
 	
-	public static final OClassSet SCHEMALESS_SET = OClassSet.newSchemaSet("");
+	public static final OClassSet SCHEMALESS_SET = new OClassSet();
 	public static final OClassVersion SCHEMALESS = SCHEMALESS_SET.currentSchema();
 	
 	static {
@@ -52,16 +53,37 @@ public class OSchemaIndex {
 //	}
 	
 	/**
-	 * Probably only used when deserializing schema from disk on db startup
+	 * Used when generating a new class
 	 * @param clazz
 	 */
-	public static void addClass(OClassSet clazz) {
+	public static void newClass(OClassSet clazz) {
 		
 		if (schemaMap.containsKey(clazz.getClassName()))
-			throw new RuntimeException("Class cannot be to full schema set twice");
+			throw new RuntimeException("Class cannot be added to full schema set twice: " + clazz);
 		
-		clazz.setSchemaId(schemas.size());
+		clazz.setClassId(schemas.size());
 		schemas.add(clazz);
+		schemaMap.put(clazz.getClassName(), clazz);
+	}
+	
+	/**
+	 * Used to register classes as they are deserialized from schema
+	 * @param clazz
+	 */
+	static void registerClass(OClassSet clazz) {
+		
+		//if (schemaMap.containsKey(clazz.getClassName()))
+		//	OLogManager.instance().info(OClassIndex.class, "Class is being registered when already registered: " + clazz);
+			
+		
+		/*
+		 * We may not get classes back from schema in order so pad out the list
+		 * to ensure it has capacity to set the registered class at the correct index
+		 */
+		while (schemas.size() <= clazz.getClassId())
+			schemas.add(null);
+		
+		schemas.set(clazz.getClassId(), clazz);
 		schemaMap.put(clazz.getClassName(), clazz);
 	}
 	
