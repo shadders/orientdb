@@ -49,7 +49,7 @@ public class OBinaryDocument extends ODocument {
 	}
 
 	public OBinaryDocument(OClassVersion iClass) {
-		super(iClass);
+		super(iClass.getClassSet());
 	}
 
 	public OBinaryDocument(Object[] iFields) {
@@ -70,7 +70,14 @@ public class OBinaryDocument extends ODocument {
 		// header = ObjectPool.newRecordHeader();
 		_recordFormat = ORecordSerializerFactory.instance().getFormat(BinaryDocumentSerializer.NAME);
 	}
-
+	
+	/**
+	 * Internal
+	 */
+	void setClassInternal(OClass clazz) {
+		setClass(clazz);
+	}
+	
 	/**
 	 * Internal.
 	 */
@@ -79,6 +86,8 @@ public class OBinaryDocument extends ODocument {
 	}
 
 	OBinRecordHeader getHeader() {
+		if (isDirty())
+			header = null;
 		return header;
 	}
 

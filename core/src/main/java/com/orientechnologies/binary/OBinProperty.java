@@ -62,7 +62,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	}
 	
 	private void checkOwner(OClassImpl iOwner) {
-		if (iOwner instanceof OClassVersion)
+		if (iOwner instanceof OClassSet)
 			return;
 		throw new RuntimeException("owner class is not an instance of OClassVersion");
 	}
@@ -115,13 +115,13 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	public int getNameId() {
 		if (nameId == -1) {
 			String name = getName();
-			nameId = getClassVersion().getClassSet().idFor(name);
+			nameId = getClassSet().idFor(name);
 		}
 		return nameId;
 	}
 	
-	private OClassVersion getClassVersion() {
-		return (OClassVersion) getOwnerClass();
+	private OClassSet getClassSet() {
+		return (OClassSet) getOwnerClass();
 	}
 
 	/**
@@ -294,6 +294,10 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 		return document;
+	}
+	
+	public String toString() {
+		return String.format("%s[%s] off: %s len: %s", getName(), getType(), inDataOffset, dataLength);
 	}
 
 }

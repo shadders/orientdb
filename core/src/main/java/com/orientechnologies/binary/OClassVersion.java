@@ -1,10 +1,13 @@
 package com.orientechnologies.binary;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.binary.util.BinUtils;
 import com.orientechnologies.binary.util.CaselessString;
@@ -14,6 +17,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * 
@@ -21,10 +25,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Steve Coughlan
  * 
  */
-public class OClassVersion extends OClassImpl {
+public class OClassVersion extends ODocumentWrapperNoClass {
 
 	protected OClassSet classSet;
-	final protected OSchemaShared iOwner;
+	//final protected OSchemaShared iOwner;
 
 	private int classId;
 	private int version;
@@ -64,58 +68,58 @@ public class OClassVersion extends OClassImpl {
 
 	
 	
-	OClassVersion(OClassSet classSet, int version, final OSchemaShared iOwner, String iName, final int[] iClusterIds) {
-		super(iOwner, iName, iClusterIds);
-		this.iOwner = iOwner;
+	OClassVersion(OClassSet classSet, int version, Collection<OBinProperty> properties) {
+		//super(iOwner, iName, iClusterIds);
+		//this.iOwner = iOwner;
 		this.version = version;
-		this.className = new CaselessString(iName);
-		setClassName();
 		if (classSet != null)
 			setClassSet(classSet);
+		for (OBinProperty property: properties)
+			addProperty(property);
+		makeImmutable();
 	}
 	
-	/**
-	 * for unmarshalling from stored schema
-	 * @param iOwner
-	 * @param document
-	 */
-	OClassVersion(final OSchemaShared iOwner, ODocument document) {
-		super(iOwner, document);
-		this.iOwner = iOwner;
-	}
+//	/**
+//	 * for unmarshalling from stored schema
+//	 * @param iOwner
+//	 * @param document
+//	 */
+//	OClassVersion(final OSchemaShared iOwner, ODocument document) {
+//		super(iOwner, document);
+//		this.iOwner = iOwner;
+//	}
 	
-	OClassVersion() {
+	OClassVersion(OClassSet classSet) {
 		super();
-		this.iOwner = null;
+		//this.iOwner = null;
 		this.version = 0;
-		this.className = new CaselessString("");
-		this.name = className.getCased();
-		classSet = (OClassSet) this;
-		classId = 0;
+		//this.name = className.getCased();
+		setClassSet(classSet);
 	}
 	
 	void setClassSet(OClassSet classSet) {
 		this.classSet = classSet;
 		this.classId = classSet.getClassId();
+		this.className = classSet.getClassName();
 	}
 	
 
-	private void setClassName() {
-		setNameInternal(className.getCased());
-	}
+//	private void setClassName() {
+//		setNameInternal(className.getCased());
+//	}
 	
-	public void addProperty(OBinProperty property) {
-		addProperty(property, true);
-	}
+//	public void addProperty(OBinProperty property) {
+//		addProperty(property, true);
+//	}
 	
-	private void addProperty(OBinProperty property, boolean addToSuper) {
+	private void addProperty(OBinProperty property) {
 		property.setMutableInternal(true);
 		property.setUserOrder(properties.size());
 		int nameId = getClassSet().idFor(property.getName());
 		property.setNameId(nameId);
 		properties.add(property);
-		if (addToSuper)
-			super.addProperty(property.getName(), property.getType(), null, null);
+//		if (addToSuper)
+//			super.addProperty(property.getName(), property.getType(), null, null);
 		
 	}
 
@@ -285,9 +289,9 @@ public class OClassVersion extends OClassImpl {
 
 	public OClassVersion getMutableCopy() {
 		// TODO do this manually do we can use the object pool
-		OClassVersion clone = new OClassVersion(classSet, version, iOwner, getName(), getClusterIds());
-		//clone.schemaSet = classSet;
-		//clone.version = version;
+		OClassVersion clone = new OClassVersion(classSet);
+		
+		clone.version = version;
 		clone.classId = classId;
 		clone.className = className;
 		clone.properties = new ArrayList(properties.size());
@@ -314,23 +318,45 @@ public class OClassVersion extends OClassImpl {
 		clone.mutable = true;
 		return clone;
 	}
-
+	
 	@Override
-	public void fromStream() {
-		super.fromStream();
+	protected void fromStream() {
 		version = document.field("version", OType.INTEGER);
-		for (OProperty property: super.properties.values()) {
-			addProperty((OBinProperty) property, false);
+		//classId = document.field("classId", OType.INTEGER);
+		//className = new CaselessString(document.field("className", OType.STRING).toString());
+		
+		for (OBinProperty property: properties) {
+			addProperty(property);
 		}
-		className = new CaselessString(getName());
+		
+		Object obj = document.field("properties", OType.EMBEDDEDLIST);
+		if (obj instanceof Collection<?>) {
+			final Collection<ODocument> col = (Collection<ODocument>) obj;
+			properties = new ArrayList(col.size());
+			for (ODocument propertyDoc : col) {
+				OBinProperty property = new OBinProperty(getClassSet());
+				property.fromStream(propertyDoc);
+				addProperty(property);
+	      }
+		}
+		
 		makeImmutable();
 	}
 
 	@Override
 	public ODocument toStream() {
 		
-		ODocument document = super.toStream();
+		document = new ODocument();
 		document.field("version", version, OType.INTEGER);
+		//document.field("classId", classId, OType.INTEGER);
+		//document.field("className", className.getCased(), OType.STRING);
+		
+		final List<ODocument> propertyDocs = new ArrayList<ODocument>();
+		for (OBinProperty property: properties) {
+			propertyDocs.add(property.toStream());
+		}
+		document.field("properties", propertyDocs, OType.EMBEDDEDLIST);
+		
 		return document;
 	}
 	
@@ -341,6 +367,9 @@ public class OClassVersion extends OClassImpl {
 	ODocument superToStream() {
 		return super.toStream();
 	}
-	
 
+	public String toString() {
+		return String.format("%s[v:%s]", classSet, version);
+	}
+	
 }

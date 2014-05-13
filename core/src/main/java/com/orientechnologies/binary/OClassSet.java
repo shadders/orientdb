@@ -2,6 +2,7 @@ package com.orientechnologies.binary;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -11,6 +12,10 @@ import java.util.Set;
 
 import com.orientechnologies.binary.util.CaselessString;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,13 +33,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Steve Coughlan
  * 
  */
-public class OClassSet extends OClassVersion {
+public class OClassSet extends OClassImpl {
 
 	// final private IPropertyIdProvider idProvider;
 
-	private OClassVersion[] versions;
+	private OClassVersion[] versions = new OClassVersion[0];
 	private OClassVersion current;
 	private int classId;
+	private CaselessString className;
 
 	/**
 	 * List of field names, the indexes correspond to nameId for the property
@@ -81,12 +87,13 @@ public class OClassSet extends OClassVersion {
 	 * @param iClusterIds
 	 */
 	public OClassSet(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
-		super(null, 0, iOwner, iName, iClusterIds);
-		setClassSet(this);
+		super(iOwner, iName, iClusterIds);
+		className = new CaselessString(iName);
+		//setClassSet(this);
 		// idProvider =
 		// IPropertyIdProvider.getForClass(this.className.getCaseless());
-		OClassIndex.newClass(this);
-		updateSchema(this);
+		OClassIndex.get().newClass(this);
+		updateSchema();
 	}
 
 	/**
@@ -94,12 +101,12 @@ public class OClassSet extends OClassVersion {
 	 */
 	OClassSet() {
 		super();
-		setClassSet(this);
+		className = null;
+		//setClassSet(this);
 		// idProvider =
 		// IPropertyIdProvider.getForClass(this.className.getCaseless());
-		OClassIndex.newClass(this);
-		updateSchema(this);
-		makeImmutable();
+		OClassIndex.get().newClass(this);
+		updateSchema();
 	}
 
 	// public static OClassSet newSchemaSet(String className) {
@@ -116,7 +123,7 @@ public class OClassSet extends OClassVersion {
 	 */
 	public OClassSet(final OSchemaShared iOwner, ODocument document) {
 		super(iOwner, document);
-		classSet = this;
+		//classSet = this;
 	}
 
 	/**
@@ -131,17 +138,25 @@ public class OClassSet extends OClassVersion {
 	}
 
 	public OClassVersion currentSchema() {
-		// return current;
-		return this;
+		return current;
 	}
 
-	public void updateSchema(OClassVersion newSchema) {
+	private void updateSchema() {
+		
+		if (OClassIndex.SCHEMALESS == this) {
+			//if this happens we could corrupt the entire database if any schemaless records
+			//are saved.
+			System.err.println("Schemaless class has been modified");
+			System.exit(1);
+		}
+		
+		OClassVersion newSchema = new OClassVersion(this, versions.length, binaryProperties());
 		OClassVersion[] newVersions;
 		if (versions == null) {
 			newVersions = new OClassVersion[1];
 		} else {
 			newVersions = new OClassVersion[versions.length + 1];
-			for (int i = 0; i < newVersions.length; i++) {
+			for (int i = 0; i < versions.length; i++) {
 				newVersions[i] = versions[i];
 			}
 		}
@@ -166,6 +181,16 @@ public class OClassSet extends OClassVersion {
 	// return idProvider;
 	// }
 
+	public Collection<OBinProperty> binaryProperties() {
+		Collection<OProperty> props = properties.values();
+		List<OBinProperty> properties = new ArrayList(props.size());
+		//TODO replicate super.properties() and do the casting there.
+		//Eventually super should use the OBinProperty type anyway.
+		for (OProperty prop: props)
+			properties.add((OBinProperty) prop);
+		return properties;
+	}
+	
 	/**
 	 * @return the classId
 	 */
@@ -203,7 +228,12 @@ public class OClassSet extends OClassVersion {
 		return id == null ? newName(name) : id;
 	}
 
-	public synchronized int newName(String name) {
+	/**
+	 * Creates and index for a new property name if necessary and returns it.
+	 * @param name
+	 * @return
+	 */
+	synchronized int newName(String name) {
 
 		int id = -1;
 
@@ -215,6 +245,14 @@ public class OClassSet extends OClassVersion {
 			names.set(id, name);
 		}
 		ids.put(name, id);
+		
+		/*
+		 * FIXME We should do this only when the document is saved.
+		 */
+		//which of these is the correct one to use here?
+		//will go with save since we may have to do this inside a transaction
+		//save();
+		saveInternal();
 
 		return id;
 	}
@@ -223,6 +261,9 @@ public class OClassSet extends OClassVersion {
 	public void fromStream() {
 		
 		super.fromStream();
+		
+		if (getName() != null)
+			className = new CaselessString(getName());
 
 		// get extra fields
 		classId = document.field("classId", OType.INTEGER);
@@ -244,14 +285,7 @@ public class OClassSet extends OClassVersion {
 		obj = document.field("fieldNameHoles", OType.EMBEDDEDLIST);
 
 		holes.clear();
-		
-//		if (obj instanceof Collection<?>) {
-//			final Collection col = (Collection) obj;
-//			for (final Object holesIndex : col) {
-//				holes.add(new Integer(String.valueOf(holesIndex)));
-//			}
-//		}
-		
+				
 		if (obj instanceof Collection<?>) {
 			final Collection<Integer> col = (Collection) obj;
 			for (final Integer holesIndex : col) {
@@ -259,18 +293,19 @@ public class OClassSet extends OClassVersion {
 			}
 		}
 		
-		obj = document.field("versions", OType.EMBEDDEDSET);
+		obj = document.field("versions", OType.EMBEDDEDLIST);
 		if (obj instanceof Collection<?>) {
 			final Collection<ODocument> col = (Collection<ODocument>) obj;
 			versions = new OClassVersion[col.size()];
 			for (ODocument versionDoc : col) {
-				OClassVersion version = new OClassVersion(this, -1, iOwner, getName(), getClusterIds());
+				OClassVersion version = new OClassVersion(this);
 				version.fromStream(versionDoc);
 				versions[version.getVersion()] = version;
-	      }
+			}
+			current = versions[versions.length - 1];
 		}
 		
-		OClassIndex.registerClass(this);
+		OClassIndex.get().registerClass(this);
 	}
 
 	@Override
@@ -289,22 +324,45 @@ public class OClassSet extends OClassVersion {
 			document.field("fieldNames", names, OType.EMBEDDEDLIST);
 			document.field("fieldNameHoles", holes, OType.EMBEDDEDLIST);
 			
-			final Set<ODocument> classVersions = new LinkedHashSet<ODocument>();
-			if (!"".equals(className)) {
+			final List<ODocument> classVersions = new ArrayList<ODocument>();
 			for (OClassVersion version: versions) {
-//				if (version instanceof OClassSet)
-//					//schemaless class will be an OClassSet
-//					//so avoid a stack overflow
-//					continue;
 				classVersions.add(version.toStream());
 			}
-			document.field("versions", classVersions, OType.EMBEDDEDSET);
-			}
+			document.field("versions", classVersions, OType.EMBEDDEDLIST);
 
 		} finally {
 			document.setInternalStatus(ORecordElement.STATUS.LOADED);
 		}
 		return document;
+	}
+
+	@Override
+	public void dropProperty(String iPropertyName) {
+		super.dropProperty(iPropertyName);
+		updateSchema();
+	}
+
+	@Override
+	public void dropPropertyInternal(String iPropertyName) {
+		super.dropPropertyInternal(iPropertyName);
+		updateSchema();
+	}
+
+//	@Override
+//	protected OProperty addProperty(String iPropertyName, OType iType, OType iLinkedType, OClass iLinkedClass) {
+//		return super.addProperty(iPropertyName, iType, iLinkedType, iLinkedClass);
+//		updateSchema();
+//	}
+
+	@Override
+	public OPropertyImpl addPropertyInternal(String iName, OType iType, OType iLinkedType, OClass iLinkedClass) {
+		OBinProperty property = (OBinProperty) super.addPropertyInternal(iName, iType, iLinkedType, iLinkedClass);
+		updateSchema();
+		return property;
+	}
+	
+	public String toString() {
+		return String.format("%s[vs:%s cid:%s]", getName(), versions.length, classId);
 	}
 
 }

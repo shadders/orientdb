@@ -34,8 +34,13 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 		header.parseHead(bytes, null);
 		
 		OClassVersion clazz = header.getClazz();
-		OBinaryDocument doc = new OBinaryDocument(clazz);
-//		IPropertyIdProvider idProvider = IPropertyIdProvider.getForClass(clazz.getName());		
+		OBinaryDocument doc;// = new OBinaryDocument(clazz);
+		
+		if (iRecord instanceof OBinaryDocument) {
+			doc = (OBinaryDocument) iRecord;
+			doc.setClassInternal(clazz.classSet);
+		} else
+			doc = new OBinaryDocument(header.getClazz());	
 		
 		int index;
 		
@@ -59,7 +64,8 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			}
 			
 			if (header.isNull(i))
-				value = null;
+				//value = null;
+				value = readField(header, bytes, header.getDataOffset(), entry);
 			else
 				value = readField(header, bytes, header.getDataOffset(), entry);
 			
@@ -75,16 +81,20 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 	@Override
 	public ORecordInternal<?> fromStream(byte[] bytes, ORecordInternal<?> iRecord, String[] iFields) {
 		
+		if (iFields == null || iFields.length == 0)
+			return fromStream(bytes, iRecord);
+		
 		OBinRecordHeader header = ObjectPool.newRecordHeader();
 		header.parseHead(bytes, iFields);
 		
 		OClassVersion clazz = header.getClazz();
-		OBinaryDocument doc = new OBinaryDocument(clazz);
+		OBinaryDocument doc;// = new OBinaryDocument(clazz);
 		
-//		if (iRecord instanceof OBinaryDocument)
-//			doc = (OBinaryDocument) iRecord;
-//		else
-//			doc = new OBinaryDocument(header.getClazz());
+		if (iRecord instanceof OBinaryDocument) {
+			doc = (OBinaryDocument) iRecord;
+			doc.setClassInternal(clazz.classSet);
+		} else
+			doc = new OBinaryDocument(header.getClazz());
 				
 		int index;
 		
@@ -117,9 +127,9 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			//might be a new record
 			String className = doc.getClassName();
 			if (className != null) {
-				clazz = OClassIndex.getCurrentSchemaForName(className);
+				clazz = OClassIndex.get().getCurrentSchemaForName(className);
 			} else {
-				clazz = OClassIndex.SCHEMALESS;
+				clazz = OClassIndex.SCHEMALESS.currentSchema();
 			}
 			header = new OBinRecordHeader(doc, clazz, !iOnlyDelta);
 			header.setClazz(clazz);

@@ -31,6 +31,9 @@ public class JsonSerializer implements IFieldSerializer {
 
 	@Override
 	public Object deserialize(String fieldName, byte[] stream, int offset, int length) {
+		String string = new String(stream, offset, length);
+		if (length == 0)
+			return null;
 		try {
 			Map value = mapper.readValue(stream, offset, length, Map.class);
 			return value.get(fieldName == null ? "val" : fieldName);

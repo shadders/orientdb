@@ -40,7 +40,7 @@ public class TestOdbBinMain {
 
 		boolean isNew;
 		isNew = true;
-		//isNew = false;
+		isNew = false;
 
 		File dir = new File("/home/git/junk/rubbish/orientdb");
 		ODatabaseDocumentTx db;
@@ -68,14 +68,25 @@ public class TestOdbBinMain {
 		fields.add(new OBinProperty());
 
 		// OClassSet schemaSet = OClassSet.newSchemaSet("employee");
-		OClassSet schemaSet = (OClassSet) db.getMetadata().getSchema().createClass("employee");
+		OClassSet schemaSet;
+		if (isNew) {
+			schemaSet = (OClassSet) db.getMetadata().getSchema().createClass("employee");
+			schemaSet.createProperty("fullname", OType.STRING);
+			schemaSet.createProperty("age", OType.INTEGER);
+			schemaSet.createProperty("dateofbirth", OType.DATE);
+			schemaSet.createProperty("nullString", OType.STRING);
+			schemaSet.createProperty("nullFloat", OType.FLOAT);
+		}
+		else
+			schemaSet = (OClassSet) db.getMetadata().getSchema().getClass("employee");
 		OClassVersion clazz = schemaSet.currentSchema();
-		clazz.addProperty(new OBinProperty(clazz, "fullname", OType.STRING));
-		clazz.addProperty(new OBinProperty(clazz, "age", OType.INTEGER));
-		clazz.addProperty(new OBinProperty(clazz, "dateofbirth", OType.DATE));
-		clazz.addProperty(new OBinProperty(clazz, "nullString", OType.STRING));
-		clazz.addProperty(new OBinProperty(clazz, "nullFloat", OType.FLOAT));
-		clazz.makeImmutable();
+		
+//		clazz.addProperty(new OBinProperty(clazz, "fullname", OType.STRING));
+//		clazz.addProperty(new OBinProperty(clazz, "age", OType.INTEGER));
+//		clazz.addProperty(new OBinProperty(clazz, "dateofbirth", OType.DATE));
+//		clazz.addProperty(new OBinProperty(clazz, "nullString", OType.STRING));
+//		clazz.addProperty(new OBinProperty(clazz, "nullFloat", OType.FLOAT));
+		
 
 		// db.getMetadata().getSchema().createClass(schema.getName());
 
@@ -115,7 +126,7 @@ public class TestOdbBinMain {
 
 		System.out.println("part2: " + prettyDoc(partDoc2));
 
-		db.save(doc, clazz.getName());
+		db.save(doc, schemaSet.getName());
 
 		doc = db.load(doc.getIdentity());
 

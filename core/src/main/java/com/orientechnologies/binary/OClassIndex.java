@@ -18,32 +18,35 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  */
 public class OClassIndex {
 
+	private static OClassIndex instance = new OClassIndex();
 			
-	private static List<OClassSet> schemas = new ArrayList();
-	private static Map<CaselessString, OClassSet> schemaMap = new HashMap();
+	private List<OClassSet> schemas = new ArrayList();
+	private Map<CaselessString, OClassSet> schemaMap = new HashMap();
 	
-	public static final OClassSet SCHEMALESS_SET = new OClassSet();
-	public static final OClassVersion SCHEMALESS = SCHEMALESS_SET.currentSchema();
+	public static final OClassSet SCHEMALESS = new OClassSet();
 	
-	static {
-		SCHEMALESS.makeImmutable();
+	private OClassIndex() {
 	}
 	
-	public static OClassSet getSchemaSetForId(int classId) {
+	public static OClassIndex get() {
+		return instance;
+	}
+	
+	public OClassSet getSchemaSetForId(int classId) {
 		return schemas.get(classId);
 	}
 	
-	public static OClassVersion getCurrentSchemaForId(int classId) {
+	public OClassVersion getCurrentSchemaForId(int classId) {
 		OClassSet set = schemas.get(classId);
 		return set == null ? null : set.currentSchema();
 	}
 	
-	public static OClassVersion getCurrentSchemaForName(String name) {
+	public OClassVersion getCurrentSchemaForName(String name) {
 		OClassSet set = schemaMap.get(new CaselessString(name));
 		return set == null ? null : set.currentSchema(); 
 	}
 	
-	public static OClassSet getSchemaSetForName(String name) {
+	public OClassSet getSchemaSetForName(String name) {
 		return schemaMap.get(new CaselessString(name));
 	}
 	
@@ -56,7 +59,7 @@ public class OClassIndex {
 	 * Used when generating a new class
 	 * @param clazz
 	 */
-	public static void newClass(OClassSet clazz) {
+	public void newClass(OClassSet clazz) {
 		
 		if (schemaMap.containsKey(clazz.getClassName()))
 			throw new RuntimeException("Class cannot be added to full schema set twice: " + clazz);
@@ -70,7 +73,7 @@ public class OClassIndex {
 	 * Used to register classes as they are deserialized from schema
 	 * @param clazz
 	 */
-	static void registerClass(OClassSet clazz) {
+	void registerClass(OClassSet clazz) {
 		
 		//if (schemaMap.containsKey(clazz.getClassName()))
 		//	OLogManager.instance().info(OClassIndex.class, "Class is being registered when already registered: " + clazz);

@@ -147,7 +147,7 @@ public class OBinRecordHeader implements IRecyclable {
 	 */
 	OBinRecordHeader(OBinaryDocument doc, OClassVersion clazz, boolean updateSchema) {
 		if (clazz == null)
-			clazz = OClassIndex.SCHEMALESS;
+			clazz = OClassIndex.SCHEMALESS.currentSchema();
 		else if (updateSchema) {
 			/*
 			 * If the record is being rewritten and the schema has changed since
@@ -186,7 +186,7 @@ public class OBinRecordHeader implements IRecyclable {
 				if (type == null)
 					type = OType.ANY;
 				// TODO is there a way to determine type dynamically?
-				property = new OBinProperty(clazz, field, type);
+				property = new OBinProperty(clazz.getClassSet(), field, type);
 
 				// setName seems to trigger an attempt to update schema in DB
 				property.setSchemaless(true);
@@ -204,7 +204,7 @@ public class OBinRecordHeader implements IRecyclable {
 		// when retrieving via fieldHeader(int)
 		parsedProperties = propertyEntries.size() + clazz.fixedLengthPropertyCount();
 	}
-
+	
 	/**
 	 * 
 	 * @param out
@@ -270,7 +270,7 @@ public class OBinRecordHeader implements IRecyclable {
 				// at the present time.
 				out.write(property.getType().ordinal());
 			}
-			// both types of property need these fields but only write then
+			// both types of property need these fields but only write them
 			// if the null bit is not set
 			if (!isNull(i + clazz.fixedLengthPropertyCount())) {
 				Varint.writeUnsignedVarInt(property.getInDataOffset(), out);
@@ -365,7 +365,7 @@ public class OBinRecordHeader implements IRecyclable {
 		version = Varint.readUnsignedVarInt(bytes, offset);
 		offset += Varint.bytesLength(version);
 
-		clazz = OClassIndex.getSchemaSetForId(classId).getSchema(version);
+		clazz = OClassIndex.get().getSchemaSetForId(classId).getSchema(version);
 //		idProvider = OClassIndex.getSchemaSetForId(classId).getIdProvider();
 
 		headerLength = Varint.readUnsignedVarInt(bytes, offset);
@@ -717,6 +717,10 @@ public class OBinRecordHeader implements IRecyclable {
 		if (format >= 16)
 			throw new IllegalArgumentException("Data format out of range.  Must be < 16.");
 		format = (format & 0xf0) | dataFormat;
+	}
+	
+	public String toString() {
+		return String.format("[%s] nulls[%s] props: %s", clazz, Arrays.toString(nullBits), propertyEntries);
 	}
 
 }

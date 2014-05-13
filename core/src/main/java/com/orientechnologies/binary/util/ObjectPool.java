@@ -21,7 +21,7 @@ public class ObjectPool {
 	}
 	
 	public static OBinProperty newRecordHeaderEntry(OClassVersion clazz, String name, OType type) {
-		return new OBinProperty(clazz, name, type);
+		return new OBinProperty(clazz.getClassSet(), name, type);
 	}
 	
 	public static void release(IRecyclable recyclable) {
