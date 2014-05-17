@@ -174,7 +174,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         cls = createClass(iClassName, iSuperClass);
       else if (iSuperClass != null && !cls.isSubClassOf(iSuperClass))
-        throw new IllegalArgumentException("Class '" + iClassName + "' is not an instance of " + iSuperClass.getShortName());
+        throw new IllegalArgumentException("Class '" + iClassName + "' is not an INSTANCE of " + iSuperClass.getShortName());
       addClusterClassMap(cls);
 
       return cls;
@@ -289,8 +289,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (classes.containsKey(key))
         throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
-      //final OClassImpl cls = new OClassImpl(this, iClassName, clusterIds);
-      final OClassImpl cls = new OClassSet(this, iClassName, clusterIds);
+      final OClassImpl cls = ClassFactory.get().newClass(this, iClassName, iClusterIds);
       classes.put(key, cls);
 
       if (cls.getShortName() != null)
@@ -590,8 +589,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       OClassImpl cls;
       Collection<ODocument> storedClasses = document.field("classes");
       for (ODocument c : storedClasses) {
-        //cls = new OClassImpl(this, c);
-    	cls = new OClassSet(this, c);
+        cls = ClassFactory.get().newClass(this, c);
         cls.fromStream();
         classes.put(cls.getName().toLowerCase(), cls);
 

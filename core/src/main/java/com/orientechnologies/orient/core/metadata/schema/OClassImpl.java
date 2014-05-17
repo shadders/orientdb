@@ -123,7 +123,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public <T> T newInstance() throws InstantiationException, IllegalAccessException {
     if (javaClass == null)
-      throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
+      throw new IllegalArgumentException("Cannot create an INSTANCE of class '" + name + "' since no Java class was specified");
 
     return (T) javaClass.newInstance();
   }
@@ -205,7 +205,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Set the super class.
    * 
    * @param iSuperClass
-   *          Super class as OClass instance
+   *          Super class as OClass INSTANCE
    * @return the object itself.
    */
   public OClass setSuperClass(final OClass iSuperClass) {
@@ -492,7 +492,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Collection<ODocument> storedProperties = document.field("properties");
     if (storedProperties != null)
       for (ODocument p : storedProperties) {
-        prop = new OBinProperty(this, p);
+    	  prop = ClassFactory.get().newProperty(this, p);
         prop.fromStream();
         properties.put(prop.getName().toLowerCase(), prop);
       }
@@ -918,11 +918,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   /**
-   * Check if the current instance extends specified schema class.
+   * Check if the current INSTANCE extends specified schema class.
    * 
    * @param iClassName
    *          of class that should be checked
-   * @return Returns true if the current instance extends the passed schema class (iClass)
+   * @return Returns true if the current INSTANCE extends the passed schema class (iClass)
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final String iClassName) {
@@ -941,11 +941,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   /**
-   * Check if the current instance extends specified schema class.
+   * Check if the current INSTANCE extends specified schema class.
    * 
    * @param iClass
    *          to check
-   * @return true if the current instance extends the passed schema class (iClass)
+   * @return true if the current INSTANCE extends the passed schema class (iClass)
    * @see #isSuperClassOf(OClass)
    */
   public boolean isSubClassOf(final OClass iClass) {
@@ -962,11 +962,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   /**
-   * Returns true if the passed schema class (iClass) extends the current instance.
+   * Returns true if the passed schema class (iClass) extends the current INSTANCE.
    * 
    * @param iClass
    *          to check
-   * @return Returns true if the passed schema class extends the current instance
+   * @return Returns true if the passed schema class extends the current INSTANCE
    * @see #isSubClassOf(OClass)
    */
   public boolean isSuperClassOf(final OClass iClass) {
@@ -1157,7 +1157,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (properties.containsKey(lowerName))
       throw new OSchemaException("Class " + name + " already has property '" + iName + "'");
 
-    final OPropertyImpl prop = new OBinProperty(this, iName, iType);
+    final OPropertyImpl prop = ClassFactory.get().newProperty(this, iName, iType);
 
     properties.put(lowerName, prop);
 
