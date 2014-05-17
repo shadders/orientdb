@@ -1,11 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.binary.util;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.binary.FieldSerializeStrategy;
-import com.orientechnologies.binary.IFieldSerializer;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.binary.OBinProperty;
+import com.orientechnologies.binary.serializer.FieldSerializerStrategy;
+import com.orientechnologies.binary.serializer.IFieldSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -57,8 +74,9 @@ public class BinUtils {
 	 * 
 	 * @return true if the field type is fixed length.
 	 */
-	public static boolean isFixedLength(OType type) {
-		return fieldLength(type) > 0;
+	public static boolean isFixedLength(OBinProperty property) {
+		IFieldSerializer serializer = FieldSerializerStrategy.get().serializerFor(property);
+		return serializer.isFixedLength();
 	}
 
 	/**
@@ -67,8 +85,10 @@ public class BinUtils {
 	 * @return the length of the field in bytes or -1 if this field type is
 	 *         variable length.
 	 */
-	public static int fieldLength(OType type) {
-		IFieldSerializer serializer = FieldSerializeStrategy.get().serializerFor(type);
+	public static int fieldLength(OBinProperty property) {
+		IFieldSerializer serializer = FieldSerializerStrategy.get().serializerFor(property);
+		if (serializer == null)
+			System.currentTimeMillis();
 		return serializer.isFixedLength() ? serializer.getFixedLength() : -1;
 		//return FIELD_LENGTHS.get(type);
 	}

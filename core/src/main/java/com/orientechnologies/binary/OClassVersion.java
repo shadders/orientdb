@@ -1,20 +1,31 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.binary;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.binary.util.BinUtils;
 import com.orientechnologies.binary.util.CaselessString;
-import com.orientechnologies.binary.util.ObjectPool;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
@@ -143,11 +154,11 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 			if (property.isSchemaless())
 				continue;
 			fieldIndex.put(property.getNameId(), property);
-			if (BinUtils.isFixedLength(property.getType())) {
+			if (BinUtils.isFixedLength(property)) {
 				property.setInternalOrder(fixedLengthPropertyCount());
 				fixedLengthProperties.add(property);
 				property.setInDataOffset(offset);
-				property.setDataLength(BinUtils.fieldLength(property.getType()));
+				property.setDataLength(BinUtils.fieldLength(property));
 				offset += property.getDataLength();
 			} else {
 				variableLengthProperties.add(property);

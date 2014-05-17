@@ -1,3 +1,20 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.binary;
 
 import com.orientechnologies.binary.old.Strings;
@@ -64,7 +81,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	private void checkOwner(OClassImpl iOwner) {
 		if (iOwner instanceof OClassSet)
 			return;
-		throw new RuntimeException("owner class is not an instance of OClassVersion");
+		throw new RuntimeException("owner class is not an INSTANCE of OClassVersion");
 	}
 
 	/**
@@ -85,7 +102,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 
 	/**
 	 * This should be retrieved from IPropertyIdProvider.nameFor(nameId) to
-	 * ensure the same instance of each String is always used (faster map
+	 * ensure the same INSTANCE of each String is always used (faster map
 	 * lookups)
 	 * 
 	 * @return the name
@@ -205,7 +222,7 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	 */
 	public boolean isFixedLength() {
 		//return BinUtils.isFixedLength(getLinkedType());
-		return BinUtils.isFixedLength(getType());
+		return BinUtils.isFixedLength(this);
 	}
 
 	/**
@@ -298,6 +315,11 @@ public class OBinProperty extends OPropertyImpl implements IBinHeaderEntry, IRec
 	
 	public String toString() {
 		return String.format("%s[%s] off: %s len: %s", getName(), getType(), inDataOffset, dataLength);
+	}
+
+	@Override
+	public OBinProperty asProperty() {
+		return this;
 	}
 
 }

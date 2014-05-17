@@ -15,34 +15,39 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.binary.util;
+package com.orientechnologies.binary.serializer.collection;
 
-import com.orientechnologies.binary.OBinRecordHeader;
-import com.orientechnologies.binary.OBinProperty;
-import com.orientechnologies.binary.OClassVersion;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.orientechnologies.binary.IBinHeaderEntry;
+import com.orientechnologies.binary.util.Varint;
 
 /**
- * Class for providing reusable instances of Objects
+ * TODO not finished yet
  * 
  * @author Steve Coughlan
  *
  */
-public class ObjectPool {
+public class OCollectionHeader {
 
-
-	public static OBinRecordHeader newRecordHeader() {
-		return new OBinRecordHeader();
+	private int size;
+	private long dataLength;
+	private List<IBinHeaderEntry> entries;
+	
+	private byte[] bytes;
+	private int offset;
+	
+	private void parseHead() {
+		size = Varint.readUnsignedVarInt(bytes, offset);
+		offset += Varint.bytesLength(size);
+		
+		entries = new ArrayList(size);
+		
+		for (int i = 0; i < size; i++) {
+			
+		}
 	}
 	
-	public static OBinProperty newRecordHeaderEntry(OClassVersion clazz, String name, OType type) {
-		return new OBinProperty(clazz.getClassSet(), name, type);
-	}
-	
-	public static void release(IRecyclable recyclable) {
-		recyclable.reset();
-		//determine type and put it back in the object pool.
-	}
 
 }
-

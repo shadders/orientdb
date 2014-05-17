@@ -9,15 +9,15 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.binary.BinaryDocumentSerializer;
-import com.orientechnologies.binary.FieldSerializeStrategy;
 import com.orientechnologies.binary.OClassSet;
 import com.orientechnologies.binary.OBinaryDocument;
 import com.orientechnologies.binary.OBinProperty;
 import com.orientechnologies.binary.OClassVersion;
-import com.orientechnologies.binary.jackson.JsonSerializer;
+import com.orientechnologies.binary.serializer.BinarySerializerStrategy;
+import com.orientechnologies.binary.serializer.FieldSerializerStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.ClassFactory;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
@@ -33,10 +33,12 @@ public class TestOdbBinMain {
 
 	public static void main(String[] args) throws Exception {
 
-		OBinaryDocument doc;
+		OBinaryDocument embedDoc;
 
 		ORecordSerializerFactory.instance().register(BinaryDocumentSerializer.NAME, new BinaryDocumentSerializer());
-		FieldSerializeStrategy.setStrategy(JsonSerializer.JSON_STRATEGY);
+		//FieldSerializerStrategy.setStrategy(JsonDebugSerializer.JSON_STRATEGY);
+		ClassFactory.set(ClassFactory.BINARY_FACTORY);
+		FieldSerializerStrategy.setStrategy(new BinarySerializerStrategy());
 
 		boolean isNew;
 		isNew = true;
@@ -58,7 +60,7 @@ public class TestOdbBinMain {
 			db = new ODatabaseDocumentTx("plocal:" + dir.getAbsolutePath()).open("admin", "admin");
 			db.getMetadata().getSchema().getClass("employee");
 			ODocument normalDoc;
-			normalDoc = db.load(new ORecordId("#9:0"));
+			normalDoc = db.load(new ORecordId("#9:1"));
 			System.out.println(normalDoc);
 		}
 
@@ -76,6 +78,8 @@ public class TestOdbBinMain {
 			schemaSet.createProperty("dateofbirth", OType.DATE);
 			schemaSet.createProperty("nullString", OType.STRING);
 			schemaSet.createProperty("nullFloat", OType.FLOAT);
+			schemaSet.createProperty("link", OType.LINK);
+			schemaSet.createProperty("embed", OType.EMBEDDED);
 		}
 		else
 			schemaSet = (OClassSet) db.getMetadata().getSchema().getClass("employee");
@@ -90,47 +94,57 @@ public class TestOdbBinMain {
 
 		// db.getMetadata().getSchema().createClass(schema.getName());
 
-		doc = new OBinaryDocument(clazz);
+		embedDoc = new OBinaryDocument(clazz);
 
 		// OBinaryDocument doc = new OBinaryDocument();
 		// ODocument doc = new ODocument();
 		long _25Years = 25 * 1000l * 60 * 60 * 24 * 365;
 
-		doc.field("fullname", "Luca Garulli", OType.STRING);
-		doc.field("age", 25, OType.INTEGER);
-		doc.field("dateofbirth", new Date(System.currentTimeMillis() - _25Years), OType.DATE);
-		doc.field("nullString", (Object) null);
-		doc.field("nullFloat", (Object) null);
+		embedDoc.field("fullname", "Luca Garulli", OType.STRING);
+		embedDoc.field("age", 25, OType.INTEGER);
+		embedDoc.field("dateofbirth", new Date(System.currentTimeMillis() - _25Years), OType.DATE);
+		embedDoc.field("nullString", (Object) null);
+		embedDoc.field("nullFloat", (Object) null);
 		// startServer();
-		doc.field("randomInt", 99, OType.SHORT);
-		doc.field("randomString", "My Random String", OType.STRING);
+		embedDoc.field("randomInt", 99, OType.SHORT);
+		embedDoc.field("randomString", "My Random String", OType.STRING);
+		
+		OBinaryDocument linkDoc = new OBinaryDocument(clazz);
+		linkDoc.field("fullname", "linked");
+		linkDoc = db.save(linkDoc);
+		
+		OBinaryDocument parentDoc = new OBinaryDocument(clazz);
+		parentDoc.field("fullname", "holder");
+		parentDoc.field("embed", embedDoc);
+		parentDoc.field("link", linkDoc);
+		
 
-		System.out.println("old: " + prettyDoc(doc));
+		System.out.println("old: " + prettyDoc(parentDoc));
 
-		byte[] bytes = new byte[100];
-		BinaryDocumentSerializer ser = new BinaryDocumentSerializer();
+		//byte[] bytes = new byte[100];
+		//BinaryDocumentSerializer ser = new BinaryDocumentSerializer();
 
-		bytes = ser.toStream(doc, false);
-		saveBytes(bytes, new File(dir, "data/serialized.bin"));
-		OBinaryDocument newDoc = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument());
+		//bytes = ser.toStream(doc, false);
+		//saveBytes(bytes, new File(dir, "data/serialized.bin"));
+		//OBinaryDocument newDoc = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument());
 
-		System.out.println("new: " + prettyDoc(newDoc));
+		//System.out.println("new: " + prettyDoc(newDoc));
 
-		OBinaryDocument partDoc1 = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument(), new String[] {
-				"fullname", "randomInt", "age" });
+		//OBinaryDocument partDoc1 = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument(), new String[] {
+		//		"fullname", "randomInt", "age" });
 
-		System.out.println("part1: " + prettyDoc(partDoc1));
+		//System.out.println("part1: " + prettyDoc(partDoc1));
 
-		OBinaryDocument partDoc2 = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument(), new String[] {
-				"dateofbirth", "randomString", "nullFloat", "nullString", });
+		//OBinaryDocument partDoc2 = (OBinaryDocument) ser.fromStream(bytes, new OBinaryDocument(), new String[] {
+		//		"dateofbirth", "randomString", "nullFloat", "nullString", });
 
-		System.out.println("part2: " + prettyDoc(partDoc2));
+		//System.out.println("part2: " + prettyDoc(partDoc2));
 
-		db.save(doc, schemaSet.getName());
+		db.save(parentDoc, schemaSet.getName());
 
-		doc = db.load(doc.getIdentity());
+		parentDoc = db.load(parentDoc.getIdentity());
 
-		System.out.println(doc);
+		System.out.println(parentDoc);
 
 		db.close();
 

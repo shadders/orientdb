@@ -15,34 +15,47 @@
  * limitations under the License.
  */
 
-package com.orientechnologies.binary.util;
+package com.orientechnologies.binary.serializer.collection;
 
-import com.orientechnologies.binary.OBinRecordHeader;
-import com.orientechnologies.binary.OBinProperty;
-import com.orientechnologies.binary.OClassVersion;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+
+import com.orientechnologies.binary.serializer.IFieldSerializer;
 
 /**
- * Class for providing reusable instances of Objects
+ * TODO not finished yet
  * 
  * @author Steve Coughlan
  *
+ * @param <E>
  */
-public class ObjectPool {
+public abstract class OCollectionSerializer<E> implements IFieldSerializer<Collection<E>> {
 
+	
 
-	public static OBinRecordHeader newRecordHeader() {
-		return new OBinRecordHeader();
-	}
+	public abstract byte getId();
 	
-	public static OBinProperty newRecordHeaderEntry(OClassVersion clazz, String name, OType type) {
-		return new OBinProperty(clazz.getClassSet(), name, type);
+	@Override
+	public int serialize(OutputStream stream, String fieldName, Collection<E> col) throws IOException {
+		// TODO Auto-generated method stub
+		return 0;
 	}
-	
-	public static void release(IRecyclable recyclable) {
-		recyclable.reset();
-		//determine type and put it back in the object pool.
+
+	@Override
+	public Collection<E> deserialize(String fieldName, byte[] stream, int offset, int length) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isFixedLength() {
+		return false;
+	}
+
+	@Override
+	public int getFixedLength() {
+		return -1;
 	}
 
 }
-
