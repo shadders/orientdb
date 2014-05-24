@@ -39,7 +39,7 @@ public class OBinaryDocument extends ODocument {
 	public static final byte RECORD_TYPE = 'c';
 
 	private OBinRecordHeader header;
-
+	
 	public OBinaryDocument() {
 	}
 
@@ -100,23 +100,26 @@ public class OBinaryDocument extends ODocument {
 		return RECORD_TYPE;
 	}
 
-	OBinRecordHeader getHeader() {
+	/**
+	 * Part of internal API, DO NOT USE.
+	 */
+	public OBinRecordHeader getHeader() {
 		if (isDirty())
 			header = null;
 		return header;
 	}
 
-	/**
-	 * @return an immutable set of field names
-	 */
-	public Set<String> fieldNameSet() {
-		return Collections.unmodifiableSet(_fieldValues.keySet());
-	}
-
-	/**
-	 * @return an immutable collection of field values
-	 */
-	public Collection fieldValueCollection() {
-		return Collections.unmodifiableCollection(_fieldValues.values());
-	}
+//	/**
+//	 * @return an immutable set of field names
+//	 */
+//	public Set<String> fieldNameSet() {
+//		return Collections.unmodifiableSet(_fieldValues.keySet());
+//	}
+//
+//	/**
+//	 * @return an immutable collection of field values
+//	 */
+//	public Collection fieldValueCollection() {
+//		return Collections.unmodifiableCollection(_fieldValues.values());
+//	}
 }

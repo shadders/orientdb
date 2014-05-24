@@ -65,6 +65,10 @@ public class BinaryDocumentSerializer implements ORecordSerializer {
 			IBinHeaderEntry entry = header.fieldHeader(i);
 			
 			String field = clazz.getClassSet().nameFor(entry.getNameId());
+			if (field.isEmpty()) {
+				//embedded field name
+				field = entry.getName();
+			}
 			Object value;
 			
 			if (!entry.isSchemaless()) {

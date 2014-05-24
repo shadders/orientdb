@@ -25,10 +25,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.binary.serializer.OStringSerializer;
 import com.orientechnologies.binary.util.Bits;
 import com.orientechnologies.binary.util.IRecyclable;
 import com.orientechnologies.binary.util.ObjectPool;
 import com.orientechnologies.binary.util.Varint;
+import com.orientechnologies.common.io.UnsafeByteArrayOutputStream;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
@@ -170,6 +172,7 @@ public class OBinRecordHeader implements IRecyclable {
 		}
 		clazz = clazz.getMutableCopy();
 		this.clazz = clazz;
+		final boolean embedSchemalessFieldNames = false;
 
 		String[] fields = doc.fieldNames();
 		Set<String> schemalessFields = new HashSet(Arrays.asList(fields));
@@ -223,7 +226,8 @@ public class OBinRecordHeader implements IRecyclable {
 	 * @return number of bytes written
 	 */
 	byte[] writeHeader(int headerPadding) {
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		UnsafeByteArrayOutputStream namesOut = null;
+		UnsafeByteArrayOutputStream out = new UnsafeByteArrayOutputStream();
 		int headerLengthoffset = 0;
 
 		Varint.writeUnsignedVarInt(format, out);
@@ -276,8 +280,30 @@ public class OBinRecordHeader implements IRecyclable {
 			} else {
 				finishedSchemaDeclared = true;
 
-				Varint.writeUnsignedVarInt(property.getNameId(), out);
-				// FIXME currently OType doesn't garuntee that ordinal == id
+				if (clazz.isEmbedSchemalessFieldNames()) {
+					
+					if (namesOut == null)
+						namesOut = new UnsafeByteArrayOutputStream(32);
+					else
+						namesOut.reset();
+					
+					//write a 0 nameId as a marker for embedded field name.
+					Varint.writeUnsignedVarInt(0, out);
+					
+					try {
+						OStringSerializer.INSTANCE.serialize(namesOut, "", property.getName());
+						Varint.writeUnsignedVarInt(namesOut.size(), out);
+						out.write(namesOut.getBuffer(), 0, namesOut.size());
+					} catch (IOException e) {
+						//should never happen
+						throw new RuntimeException(e);
+					}
+					
+					
+				} else {
+					Varint.writeUnsignedVarInt(property.getNameId(), out);
+				}
+				// FIXME currently OType doesn't guarantee that ordinal == id
 				// although that's currently the case for all type declared
 				// at the present time.
 				out.write(property.getType().ordinal());
@@ -302,7 +328,7 @@ public class OBinRecordHeader implements IRecyclable {
 			throw new RuntimeException(e);
 		}
 
-		byte[] bytes = out.toByteArray();
+		byte[] bytes = out.toByteArrayUnsafe();
 
 		int headerLengthSize = Varint.bytesLength(headerLength);
 		int excess = HEADER_HEADER_PADDING - headerLengthoffset - headerLengthSize;
@@ -440,8 +466,18 @@ public class OBinRecordHeader implements IRecyclable {
 			if (i >= clazz.variableLengthPropertyCount()) {
 				// schemaless: extra meta data to read
 				nameId = Varint.readUnsignedVarInt(bytes, parsedOffset);
-				name = clazz.getClassSet().nameFor(nameId);
-				parsedOffset += Varint.bytesLength(nameId);
+				if (nameId != 0) {
+					//valid nameId, can be looked up
+					name = clazz.getClassSet().nameFor(nameId);
+					parsedOffset += Varint.bytesLength(nameId);
+				} else {
+					//nameId 0 means the field name is embedded in the header
+					parsedOffset++;
+					int len = Varint.readUnsignedVarInt(bytes, parsedOffset);
+					parsedOffset += Varint.bytesLength(len);
+					name = OStringSerializer.INSTANCE.deserialize("", bytes, parsedOffset, len);
+					parsedOffset += len;
+				}
 				type = OType.getById(bytes[parsedOffset]);
 				parsedOffset++;
 			} else {

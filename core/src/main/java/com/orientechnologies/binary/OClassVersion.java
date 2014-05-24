@@ -44,6 +44,9 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 	private int classId;
 	private int version;
 	protected CaselessString className;
+	
+	//Embed field name strings in header or use lookup table.
+	private boolean embedSchemalessFieldNames = false;
 
 	/**
 	 * Indexed by user defined order
@@ -57,6 +60,7 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 	// final private TIntObjectHashMap<OBinProperty> fieldIndex = new
 	// TIntObjectHashMap();
 	private Map<Integer, OBinProperty> fieldIndex = new HashMap();
+	private Map<String, Integer> keyIndex = new HashMap();
 
 	private boolean mutable = false;
 
@@ -129,6 +133,7 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 		int nameId = getClassSet().idFor(property.getName());
 		property.setNameId(nameId);
 		properties.add(property);
+		keyIndex.put(property.getName(), property.getUserOrder());
 //		if (addToSuper)
 //			super.addProperty(property.getName(), property.getType(), null, null);
 		
@@ -136,6 +141,7 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 
 	public void makeImmutable() {
 		properties = Collections.unmodifiableList(properties);
+		keyIndex = Collections.unmodifiableMap(keyIndex);
 		calculateOffsets();
 		//final pass to make the properties immutable
 		for (OBinProperty property: properties)
@@ -287,6 +293,20 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 	public List<OBinProperty> getVariableLengthProperties() {
 		return variableLengthProperties;
 	}
+	
+	/**
+	 * @return the embedSchemalessFieldNames
+	 */
+	public boolean isEmbedSchemalessFieldNames() {
+		return embedSchemalessFieldNames;
+	}
+
+	/**
+	 * @param embedSchemalessFieldNames the embedSchemalessFieldNames to set
+	 */
+	public void setEmbedSchemalessFieldNames(boolean embedSchemalessFieldNames) {
+		this.embedSchemalessFieldNames = embedSchemalessFieldNames;
+	}
 
 	void setMutable(boolean mutable) {
 		checkMutable();
@@ -305,6 +325,7 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 		clone.version = version;
 		clone.classId = classId;
 		clone.className = className;
+		clone.embedSchemalessFieldNames = embedSchemalessFieldNames;
 		clone.properties = new ArrayList(properties.size());
 		
 		// never needs to be mutable;
@@ -333,6 +354,7 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 	@Override
 	protected void fromStream() {
 		version = document.field("version", OType.INTEGER);
+		embedSchemalessFieldNames = document.field("embedFieldNames", OType.BOOLEAN);
 		//classId = document.field("classId", OType.INTEGER);
 		//className = new CaselessString(document.field("className", OType.STRING).toString());
 		
@@ -359,6 +381,7 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 		
 		document = new ODocument();
 		document.field("version", version, OType.INTEGER);
+		document.field("embedFieldNames", embedSchemalessFieldNames, OType.BOOLEAN);
 		//document.field("classId", classId, OType.INTEGER);
 		//document.field("className", className.getCased(), OType.STRING);
 		
@@ -377,6 +400,15 @@ public class OClassVersion extends ODocumentWrapperNoClass {
 	 */
 	ODocument superToStream() {
 		return super.toStream();
+	}
+	
+	/**
+	 * A Map of field names to user index.
+	 * 
+	 * @return the keyIndex
+	 */
+	public Map<String, Integer> getKeyIndex() {
+		return keyIndex;
 	}
 
 	public String toString() {

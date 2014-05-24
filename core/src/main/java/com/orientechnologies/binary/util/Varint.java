@@ -25,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.OutputStream;
 
 /**
  * <p>
@@ -193,16 +194,26 @@ public final class Varint {
 	/**
 	 * @see #writeUnsignedVarLong(long, DataOutput)
 	 */
-	public static int writeUnsignedVarInt(int value, ByteArrayOutputStream bos) {
+	public static int writeUnsignedVarInt(int value, OutputStream bos) {
 		int size = 1;
 		while ((value & 0xFFFFFF80) != 0L) {
 			//out.writeByte((value & 0x7F) | 0x80);
-			bos.write((value & 0x7F) | 0x80);
+			try {
+				bos.write((value & 0x7F) | 0x80);
+			} catch (IOException e) {
+				//should never happen
+				throw new RuntimeException(e);
+			}
 			value >>>= 7;
 			size++;
 		}
 		//out.writeByte(value & 0x7F);
-		bos.write(value & 0x7F);
+		try {
+			bos.write(value & 0x7F);
+		} catch (IOException e) {
+			//should never happen
+			throw new RuntimeException(e);
+		}
 		return size;
 	}
 	

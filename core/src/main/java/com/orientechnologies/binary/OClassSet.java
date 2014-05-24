@@ -55,20 +55,35 @@ public class OClassSet extends OClassImpl {
 	private OClassVersion current;
 	private int classId;
 	private CaselessString className;
+	
+	//Embed field name strings in header or use lookup table.
+	private boolean embedSchemalessFieldNames = false;
 
 	/**
 	 * List of field names, the indexes correspond to nameId for the property
 	 * name.
 	 */
-	private final List<String> names = new ArrayList();
+	private final List<String> names = newNames();
 
+	private static List<String> newNames() {
+		List<String> names = new ArrayList();
+		names.add("");
+		return names;
+	}
+	
 	/**
 	 * Reverse lookup of nameId from field name.
 	 */
 	// private final TObjectIntMap<CaselessString> ids = new
 	// TObjectIntHashMap<CaselessString>(10, 0.5f, -1);
-	private final Map<String, Integer> ids = new HashMap<String, Integer>();
+	private final Map<String, Integer> ids = newIds();
 
+	private static Map<String, Integer> newIds() {
+		Map<String, Integer> ids = new HashMap<String, Integer>();
+		ids.put("", 0);
+		return ids;
+	}
+	
 	/**
 	 * To maintain index order any properties deleted from the OClassVersion are
 	 * simply marked as available space (a hole) and reused for new properties.
@@ -139,7 +154,7 @@ public class OClassSet extends OClassImpl {
 		super(iOwner, document);
 		//classSet = this;
 	}
-
+	
 	/**
 	 * @return the className
 	 */
@@ -165,6 +180,7 @@ public class OClassSet extends OClassImpl {
 		}
 		
 		OClassVersion newSchema = new OClassVersion(this, versions.length, binaryProperties());
+		newSchema.setEmbedSchemalessFieldNames(embedSchemalessFieldNames);
 		OClassVersion[] newVersions;
 		if (versions == null) {
 			newVersions = new OClassVersion[1];
@@ -281,6 +297,7 @@ public class OClassSet extends OClassImpl {
 
 		// get extra fields
 		classId = document.field("classId", OType.INTEGER);
+		embedSchemalessFieldNames = document.field("embedFieldNames", OType.BOOLEAN);
 
 		Object obj = document.field("fieldNames", OType.EMBEDDEDLIST);
 
@@ -335,6 +352,7 @@ public class OClassSet extends OClassImpl {
 		try {
 
 			document.field("classId", classId, OType.INTEGER);
+			document.field("embedFieldNames", embedSchemalessFieldNames, OType.BOOLEAN);
 			document.field("fieldNames", names, OType.EMBEDDEDLIST);
 			document.field("fieldNameHoles", holes, OType.EMBEDDEDLIST);
 			
@@ -375,6 +393,25 @@ public class OClassSet extends OClassImpl {
 		return property;
 	}
 	
+	/**
+	 * @return the embedSchemalessFieldNames
+	 */
+	public boolean isEmbedSchemalessFieldNames() {
+		return embedSchemalessFieldNames;
+	}
+
+	/**
+	 * @param embedSchemalessFieldNames the embedSchemalessFieldNames to set
+	 */
+	public void setEmbedSchemalessFieldNames(boolean embedSchemalessFieldNames) {
+		boolean update = embedSchemalessFieldNames != this.embedSchemalessFieldNames;
+		this.embedSchemalessFieldNames = embedSchemalessFieldNames;
+		if (update) {
+			updateSchema();
+			saveInternal();
+		}
+	}
+
 	public String toString() {
 		return String.format("%s[vs:%s cid:%s]", getName(), versions.length, classId);
 	}

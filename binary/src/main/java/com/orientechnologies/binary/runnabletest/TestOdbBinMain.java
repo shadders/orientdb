@@ -42,7 +42,7 @@ public class TestOdbBinMain {
 
 		boolean isNew;
 		isNew = true;
-		isNew = false;
+		//isNew = false;
 
 		File dir = new File("/home/git/junk/rubbish/orientdb");
 		ODatabaseDocumentTx db;
