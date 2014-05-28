@@ -37,11 +37,16 @@ import java.io.OutputStream;
  */
 public interface IFieldSerializer<T> {
 
-	  /**
-	   * Serialize a single field object to a byte array
-	   *
-	   * @param object        is the object to serialize
-	   */
+	/**
+	 * 
+	 * Serialize a single field object to a byte array
+	 * 
+	 * @param stream
+	 * @param fieldName
+	 * @param object
+	 * @return number of bytes serialized
+	 * @throws IOException
+	 */
 	public int serialize(OutputStream stream, String fieldName, T object) throws IOException;
 
 	  /**
