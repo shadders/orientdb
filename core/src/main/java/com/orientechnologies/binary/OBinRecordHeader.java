@@ -154,8 +154,16 @@ public class OBinRecordHeader implements IRecyclable {
 	}
 
 	/**
-	 * Build a header from a document. This constructor is for schemaless
-	 * documents
+	 * Build a header from a document.
+	 * <p>
+	 * This will only create a template header with an IBinHeaderEntry for each field contained
+	 * in the document (which will include an entry for any schema declared fields even if they
+	 * aren't contained in the document).
+	 * <p>
+	 * dataOffset and dataLength are not populated that this stage as the fields must be serialized
+	 * before this information is available.
+	 * <p>
+	 * nullBits is populated within this constructor though.
 	 * 
 	 * @param doc
 	 */
@@ -283,7 +291,7 @@ public class OBinRecordHeader implements IRecyclable {
 				if (clazz.isEmbedSchemalessFieldNames()) {
 					
 					if (namesOut == null)
-						namesOut = new UnsafeByteArrayOutputStream(32);
+						namesOut = new UnsafeByteArrayOutputStream();
 					else
 						namesOut.reset();
 					
