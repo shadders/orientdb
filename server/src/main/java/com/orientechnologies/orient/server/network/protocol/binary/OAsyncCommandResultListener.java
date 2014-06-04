@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Asynchronous command result manager. As soon as a record is returned by the command is sent over the wire.
@@ -20,10 +20,13 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean          empty = new AtomicBoolean(true);
   private final int                    txId;
+  private final OCommandResultListener resultListener;
 
-  public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId) {
+  public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
+      OCommandResultListener resultListener) {
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
+    this.resultListener = resultListener;
   }
 
   @Override
@@ -31,7 +34,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
     if (empty.compareAndSet(true, false))
       try {
         protocol.sendOk(txId);
-      } catch (IOException e1) {
+      } catch (IOException ignored) {
       }
 
     try {
@@ -50,13 +53,20 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
       });
 
       protocol.channel.writeByte((byte) 1); // ONE MORE RECORD
-      protocol.writeIdentifiable((ORecordInternal<?>) ((OIdentifiable) iRecord).getRecord());
+      protocol.writeIdentifiable(((OIdentifiable) iRecord).getRecord());
 
     } catch (IOException e) {
       return false;
     }
 
     return true;
+  }
+
+  @Override
+  public void end() {
+    super.end();
+    if (resultListener != null)
+      resultListener.end();
   }
 
   public boolean isEmpty() {
