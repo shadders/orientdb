@@ -17,7 +17,6 @@
 
 package com.orientechnologies.binary;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +32,7 @@ import com.orientechnologies.binary.util.Varint;
 import com.orientechnologies.common.io.UnsafeByteArrayOutputStream;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Record header for OBinary Document.
@@ -167,7 +167,7 @@ public class OBinRecordHeader implements IRecyclable {
 	 * 
 	 * @param doc
 	 */
-	OBinRecordHeader(OBinaryDocument doc, OClassVersion clazz, boolean updateSchema) {
+	OBinRecordHeader(ODocument doc, OClassVersion clazz, boolean updateSchema) {
 		if (clazz == null)
 			clazz = OClassIndex.SCHEMALESS.currentSchema();
 		else if (updateSchema) {

@@ -279,7 +279,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
     OClassImpl cls = new OClassImpl(this, iClassName, clusterIds);
-
+    
     final OClass prevClass = classes.putIfAbsent(key, cls);
     if (prevClass != null)
       cls = (OClassImpl) prevClass;
